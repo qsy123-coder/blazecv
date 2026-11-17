@@ -34,7 +34,7 @@ const state = () =>
     return {
       asideW: Math.round(aside.getBoundingClientRect().width),
       cols: getComputedStyle(aside.querySelector(".editor-cards")).columnCount,
-      scrollTop: Math.round(aside.scrollTop),
+      scrollTop: Math.round((aside.querySelector("[data-editor-scroll]")?.scrollTop) ?? aside.scrollTop),
       tabs,
       cards,
     };

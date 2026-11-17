@@ -72,7 +72,11 @@ export async function POST(request: Request) {
   }
   const { browser, owned } = acquired;
 
-  const origin = new URL(request.url).origin;
+  // The internal headless browser always talks to the app over loopback HTTP;
+  // behind an HTTPS reverse proxy request.url can be https://localhost:3000,
+  // which the local server cannot serve.
+  const origin =
+    process.env.EXPORT_INTERNAL_ORIGIN || new URL(request.url).origin;
   const b64 = Buffer.from(JSON.stringify(doc), "utf8").toString("base64");
   const page = await browser.newPage();
   try {

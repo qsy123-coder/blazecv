@@ -560,15 +560,18 @@ async function runTemplate(token) {
       cssH,
       expectedPages,
       exportPages: pageFiles.length,
+      pageCountMismatch: pageFiles.length !== expectedPages,
       mean: overall,
       pages: pageRows,
-      flagged: pageRows.some(
-        (r) =>
-          r.mean > 6 ||
-          r.changedPct > 8 ||
-          (Math.abs(r.offsetCss.dy) > 40 && r.meanNoAlign > 1) ||
-          r.inkPct < 0.2,
-      ),
+      flagged:
+        pageFiles.length !== expectedPages ||
+        pageRows.some(
+          (r) =>
+            r.mean > 6 ||
+            r.changedPct > 8 ||
+            (Math.abs(r.offsetCss.dy) > 40 && r.meanNoAlign > 1) ||
+            r.inkPct < 0.2,
+        ),
       ms: Date.now() - started,
     };
   } finally {

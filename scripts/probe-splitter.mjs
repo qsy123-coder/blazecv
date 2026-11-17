@@ -31,7 +31,7 @@ const state = () =>
     return {
       asideW: Math.round(aside.getBoundingClientRect().width),
       cols: getComputedStyle(cards).columnCount,
-      scrollbar: aside.scrollHeight > aside.clientHeight,
+      scrollbar: (() => { const s = aside.querySelector("[data-editor-scroll]"); return (s ?? aside).scrollHeight > (s ?? aside).clientHeight; })(),
       sep: r ? { x: r.x, y: r.y, w: r.width, h: r.height } : null,
       saved: (() => {
         try {

@@ -65,7 +65,10 @@ export async function POST(request: Request) {
   if (!acquired) return NextResponse.json({ error: "no browser" }, { status: 503 });
   const { browser, owned } = acquired;
 
-  const origin = new URL(request.url).origin;
+  // See export-image: the internal renderer must use loopback HTTP even when
+  // the public site is served over HTTPS by a reverse proxy.
+  const origin =
+    process.env.EXPORT_INTERNAL_ORIGIN || new URL(request.url).origin;
   const b64 = Buffer.from(JSON.stringify(doc), "utf8").toString("base64");
   const page = await browser.newPage();
   try {

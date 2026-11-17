@@ -28,9 +28,11 @@ for (const [width, height] of sizes) {
     const cards = document.querySelector(".editor-cards");
     return {
       asideW: Math.round(aside.getBoundingClientRect().width),
-      clientH: aside.clientHeight,
-      scrollH: aside.scrollHeight,
-      scrollbar: aside.scrollHeight > aside.clientHeight,
+      clientH: (aside.querySelector("[data-editor-scroll]") ?? aside).clientHeight,
+      scrollH: (aside.querySelector("[data-editor-scroll]") ?? aside).scrollHeight,
+      scrollbar:
+        (aside.querySelector("[data-editor-scroll]") ?? aside).scrollHeight >
+        (aside.querySelector("[data-editor-scroll]") ?? aside).clientHeight,
       cols: getComputedStyle(cards).columnCount,
       cardsH: Math.round(cards.getBoundingClientRect().height),
       previewW: (() => {

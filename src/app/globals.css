@@ -102,15 +102,15 @@ body {
   }
 
   .editor-cards > * {
-    margin-bottom: 6px;
+    margin-bottom: 5px;
   }
 
   .editor-cards .p-3 {
-    padding: 8px;
+    padding: 6px;
   }
 
   .editor-cards .p-2\.5 {
-    padding: 6px;
+    padding: 5px;
   }
 
   .editor-cards .py-2 {

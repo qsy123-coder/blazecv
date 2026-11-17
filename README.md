@@ -142,6 +142,8 @@ docker compose up -d --build
 - Postgres：`db` 服务，首次启动执行 `infra/db/migrations/0001_init.sql`
 - web 服务通过 `DATABASE_URL` 连接 db；HTTPS 部署时设置 `COOKIE_SECURE=true`
 - 未设置 `DATABASE_URL` 时会退回 PGlite，适合单机；多实例部署必须使用 Postgres
+- 反向代理提供 HTTPS 时设置 `EXPORT_INTERNAL_ORIGIN=http://127.0.0.1:3000`，否则服务端导出会尝试访问 `https://localhost:3000` 而失败
+- 当前生产示例：`/opt/blazecv` + systemd `blazecv.service` + nginx `aetouban.conf`，`aetouban.cn` 由 Cloudflare DNS 解析到 `43.135.10.175`
 
 ## 目录
 

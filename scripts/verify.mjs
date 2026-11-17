@@ -165,9 +165,10 @@ await page.waitForFunction(
 
 // 左栏（简历内容）必须在一屏内展示完，不允许纵向滚动条。
 const panelFit = await page.evaluate(() => {
-  const aside = document.querySelector("aside");
-  if (!aside) return null;
-  return { clientH: aside.clientHeight, scrollH: aside.scrollHeight };
+  const panel =
+    document.querySelector("[data-editor-scroll]") ?? document.querySelector("aside");
+  if (!panel) return null;
+  return { clientH: panel.clientHeight, scrollH: panel.scrollHeight };
 });
 check(
   "左栏一屏内无滚动",
