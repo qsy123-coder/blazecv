@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import type { Basics, LayoutKind, Section } from "@/lib/types";
 import {
@@ -29,7 +30,7 @@ const LAYOUT_LABEL: Record<LayoutKind, string> = {
   editorial: "标签",
 };
 
-export function TemplateCatalog() {
+export function TemplateCatalog({ seoLinks }: { seoLinks?: ReactNode }) {
   const router = useRouter();
   const [catalog, setCatalog] = useState<CatalogFile | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -310,7 +311,12 @@ export function TemplateCatalog() {
                 </div>
                 <div className="p-3">
                   <h2 className="truncate text-[12px] font-semibold text-slate-800">
-                    {entry.name}
+                    <Link
+                      href={`/templates/${entry.token}`}
+                      className="transition hover:text-blue-600"
+                    >
+                      {entry.name}
+                    </Link>
                   </h2>
                   <p className="mt-0.5 truncate text-[10px] text-slate-400">
                     {entry.desc || `${entry.tags.slice(0, 2).join(" / ")}`}
@@ -330,6 +336,12 @@ export function TemplateCatalog() {
                       </span>
                     ) : null}
                   </div>
+                  <Link
+                    href={`/templates/${entry.token}`}
+                    className="mt-2 inline-block text-[10px] font-medium text-blue-600 hover:underline"
+                  >
+                    查看模板详情 →
+                  </Link>
                 </div>
               </div>
             ))}
@@ -359,6 +371,8 @@ export function TemplateCatalog() {
             </button>
           </div>
         ) : null}
+
+        {seoLinks}
       </main>
 
       {preview ? (

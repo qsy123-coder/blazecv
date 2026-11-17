@@ -1,11 +1,27 @@
-# BlazeCV 项目说明与验收标准
+# BlazeCV 项目说明与工程规范
 
-本文件是项目级指令，任何在本仓库的改动都必须满足下列验收标准。
+本文件是项目级指令。任何在本仓库的改动都必须满足下列验收标准；**任何部署都必须走
+「部署前质量门禁 → 提交推送 → CI 绿 → 生产备份 → 部署 → 冒烟 → 回滚预案」流程**，
+任一步失败即停止，禁止先上线再补测。
 
 ## 项目本质
 
 在线简历工具的**模板 1:1 还原**：抓取原站（wondercv.com）模板页的真实 DOM + CSS，
 用语义绑定把用户内容填入，预览与导出必须和原站视觉一致。
+
+## 技术栈与线上架构
+
+- **前端/服务端**：Next.js 15（App Router）+ React 19 + TypeScript strict + Tailwind CSS + Zustand
+- **数据**：默认 PGlite 文件库（`.data/pglite`）；设置 `DATABASE_URL` 后使用 PostgreSQL 16
+- **账号**：自建会话 Cookie（`blazecv_session`，SHA-256 存库，30 天）
+  - 手机号 + 短信验证码（阿里云 / 腾讯云 / 通用 HTTP 网关）
+  - 邮箱 + 密码（仅 QQ / 网易邮箱）+ 邮箱验证码找回密码 + 登录后改密
+  - 登录设备管理（会话列表 / 退出其他设备）
+- **导出**：服务端无头浏览器截图/打印（`/api/export-image`、`/api/export-pdf`），
+  需要 `EXPORT_CDP_URL` 或 `EXPORT_CHROME_PATH`
+- **生产示例**：`/opt/blazecv` + systemd `blazecv.service` + nginx `aetouban.conf`；
+  `aetouban.cn` 由 Cloudflare DNS 解析到 `43.135.10.175`
+- **仓库**：`https://github.com/qsy123-coder/blazecv.git`，主分支 `main`
 
 ## 核心不变量（破坏即为回归）
 
@@ -68,13 +84,243 @@
     `/template-pages/<token>.html` + `applyExactTemplate`（只裁第 1 个 A4 页），不得用经典
     `ResumePaper` 近似；仅无 token 或模板页不可用时才回退经典渲染。
 12. **左栏一屏内无滚动**：编辑页「简历内容」在桌面端必须一屏展示完，不允许纵向滚动条。
-   默认宽度按视口给（高≥1050px 时 `52vw`，否则 `60vw`，clamp 420–1100px），
-   卡片用流式多列（`.editor-cards`）：列数由**容器宽度**决定（@container 480/740px → 2/3 列）。
-   矮屏（`max-height: 800px`）收紧间距并隐藏底部说明；模块默认**全部折叠**。
-   左右分栏由分隔条 `EditorSplit` 拖拽（最小左 420px / 预览 360px，双击或 Home 复位，
-   方向键 ±20px），宽度存入 `localStorage["blazecv.editor-width"]`；不得用 zoom/transform 缩小控件。
-   拖到最左侧（单列，左栏 <480px）时头部变为两行（标题 + Tab：基本信息/内容检查/排版与主题/模块内容）；
-   头部位于滚动容器之外（占满整栏宽度，滚动条只出现在下方卡片区），点击 Tab 平滑定位并同步高亮。
+    默认宽度按视口给（高≥1050px 时 `52vw`，否则 `60vw`，clamp 420–1100px），
+    卡片用流式多列（`.editor-cards`）：列数由**容器宽度**决定（@container 480/740px → 2/3 列）。
+    矮屏（`max-height: 800px`）收紧间距并隐藏底部说明；模块默认**全部折叠**。
+    左右分栏由分隔条 `EditorSplit` 拖拽（最小左 420px / 预览 360px，双击或 Home 复位，
+    方向键 ±20px），宽度存入 `localStorage["blazecv.editor-width"]`；不得用 zoom/transform 缩小控件。
+    拖到最左侧（单列，左栏 <480px）时头部变为两行（标题 + Tab：基本信息/内容检查/排版与主题/模块内容）；
+    头部位于滚动容器之外（占满整栏宽度，滚动条只出现在下方卡片区），点击 Tab 平滑定位并同步高亮。
+
+## 工程协作规范
+
+1. **先理解再行动**：改任何代码前先梳理受影响模块与调用方；跨 3 个以上文件的改动先列变更计划。
+2. **小步推进**：一次只做一个功能/修复，不顺手重构无关代码，不删除与任务无关的代码。
+3. **类型安全**：`strict: true`，避免 `any`；外部输入先校验（账号、手机号、邮箱、验证码、简历 JSON）。
+4. **数据库**：SQL 必须参数化；数据库访问只能经 `src/lib/server/*`；schema 变更只做**可重复执行的增量**
+   （`CREATE TABLE IF NOT EXISTS` / `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`），同时同步
+   `infra/db/migrations/0001_init.sql`。
+5. **敏感信息**：密码只存 bcrypt 哈希；验证码只存 SHA-256；会话只存 token 哈希；
+   错误响应不得泄漏供应商密钥、SQL 或内部路径；`.env` 永不入库。
+6. **依赖**：不引入未使用的库；新增依赖必须能解释用途并进入 `package-lock.json`。
+7. **输出格式**（Claude 执行时）：先给变更计划（受影响文件），再给改动，最后给自检清单
+   （类型检查 / 构建 / 测试结果 / 回滚点）。
+8. **部署权限**：部署动作必须由用户明确发起（“部署 / 上线”）。未明确指示时不得自行部署；
+   commit / push 也以用户指令为准。生产不可逆操作（删数据、改库、动 `.env`、改 nginx/systemd）
+   必须先说明并得到确认。
+
+## Git 提交规范
+
+使用 Conventional Commits，一次提交只做一件事：
+
+- `feat:` 新功能
+- `fix:` Bug 修复
+- `refactor:` 重构
+- `perf:` 性能
+- `test:` 测试
+- `docs:` 文档
+- `chore:` 构建/依赖/配置
+
+提交信息用中文或英文均可，但必须有明确的动词与范围，例如
+`fix(auth): 修复 header backdrop-blur 导致登录弹窗被包含块裁切`。
+
+## 测试策略
+
+- **脚本级回归为主**（项目没有单元测试框架）：
+  - `scripts/acceptance.mjs`：导出与交互验收（25 项）
+  - `scripts/verify.mjs`：全量回归（47 项，含运行时错误与左栏无滚动）
+  - `scripts/verify-sessions.mjs`：登录设备/会话管理接口（11 项，纯 HTTP）
+  - `scripts/verify-sms-login.mjs`：手机号验证码登录（5 项，内置短信网关接收端）
+  - `scripts/verify-reset.mjs`：邮箱找回密码 + 修改密码（7 项，内置 SMTP 接收端）
+  - `scripts/audit-fidelity.mjs`：模板逐像素保真
+- **改动与必跑测试的对应关系**：
+
+| 改动范围 | 必跑 |
+|---|---|
+| 模板渲染 / 绑定 / 导出 | `acceptance.mjs`、`verify.mjs`、相关模板 `audit-fidelity` |
+| 编辑器交互 / 左栏布局 | `acceptance.mjs`、`verify.mjs` |
+| 登录 / 账号 / 会话 | `verify-sessions.mjs` + `verify.mjs`；改动短信/邮件通道再跑对应 E2E |
+| 分享 / 云端简历 | `verify.mjs` |
+| 数据库 schema / 迁移 | `verify.mjs` + 认证接口测试，并在部署前备份数据库 |
+
+- 并行测试实例使用独立构建目录：`NEXT_DIST_DIR=.next-test npm run build`，启动时带同样变量，
+  避免与主构建/外部开发循环互相覆盖 chunk。
+
+## 部署前质量门禁（强制，禁止跳过）
+
+**任何部署（systemd 重启、docker compose、手动 scp/热更）之前，必须按顺序完成以下全部步骤。
+任一步失败即停止；修复后从第一步重跑。禁止“先上线再看”。**
+
+### 第 1 步：本地静态检查与构建
+
+```powershell
+npx tsc --noEmit          # 零错误
+npm run build             # 必须成功（生产构建）
+```
+
+### 第 2 步：启动本地验收环境
+
+```powershell
+# 无头浏览器（导出/回归依赖）
+Start-Process "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" -ArgumentList @(
+  "--headless=new","--disable-gpu","--no-first-run",
+  "--remote-debugging-port=9227",
+  "--user-data-dir=$env:TEMP\blazecv-cdp"
+)
+$env:EXPORT_CDP_URL = "http://127.0.0.1:9227"
+npm run start
+```
+
+### 第 3 步：全量回归与验收
+
+```powershell
+$env:CDP_URL = "http://127.0.0.1:9227"
+node scripts/verify.mjs          # 必须 47/47，且「无运行时错误」「左栏一屏内无滚动」PASS
+node scripts/acceptance.mjs      # 25 项全过
+```
+
+### 第 4 步：按改动范围补跑专项测试
+
+```powershell
+# 账号/会话改动（无需额外通道配置）
+node scripts/verify-sessions.mjs
+
+# 短信通道改动：应用以测试网关启动（见 README「验证」）
+$env:SMS_PROVIDER="http"; $env:SMS_HTTP_URL="http://127.0.0.1:9109/send"; $env:SMS_CODE_RESEND_SECONDS="2"
+node scripts/verify-sms-login.mjs
+
+# 邮件通道改动：应用接入本地 SMTP（见 README「验证」）
+$env:EMAIL_PROVIDER="smtp"; $env:EMAIL_SMTP_HOST="127.0.0.1"; $env:EMAIL_SMTP_PORT="1025"; $env:EMAIL_FROM="no-reply@blazecv.local"
+node scripts/verify-reset.mjs
+```
+
+### 第 5 步：提交并推送，等待 CI 绿
+
+```powershell
+git status --short
+git add <本次改动的文件>
+git commit -m "fix(scope): 说明"
+git push origin main
+```
+
+推送后必须等待 GitHub Actions `Quality Checks` 通过（`.github/workflows/quality.yml`：
+`npm ci` → `tsc --noEmit` → `npm run build`）。**CI 未绿不得部署**；失败时看日志修复并重新推送。
+
+本机访问 GitHub 需要显式代理（系统代理关闭）：
+
+```powershell
+$env:HTTPS_PROXY='http://127.0.0.1:7897'; $env:HTTP_PROXY=$env:HTTPS_PROXY; git push origin main
+# Node 脚本内的 fetch 还需：
+$env:NODE_USE_ENV_PROXY='1'
+```
+
+代理返回 `502` / `schannel: failed to receive handshake` 说明 Clash 节点不可用（不是断网），
+切换节点后再重试；节点切换见 wave-mod 的 `scripts/local-proxy.ps1`。
+
+### 第 6 步：生产备份（部署前最后一步）
+
+```bash
+# 记录当前线上版本，作为回滚点
+cd /opt/blazecv && git rev-parse HEAD
+
+# 数据库备份（生产使用 PostgreSQL）
+pg_dump "$DATABASE_URL" > /root/blazecv-$(date +%F-%H%M).sql
+
+# 若使用 PGlite（单机）
+tar -czf /root/blazecv-pglite-$(date +%F-%H%M).tar.gz /opt/blazecv/.data/pglite
+
+# 环境变量与 systemd/nginx 配置留档（敏感文件不要进 git）
+cp /opt/blazecv/.env /root/blazecv.env.$(date +%F-%H%M)
+cp /etc/systemd/system/blazecv.service /root/ 2>/dev/null || true
+```
+
+## 生产部署流程（systemd）
+
+```bash
+ssh root@43.135.10.175
+cd /opt/blazecv
+
+# 1. 确认工作区干净、拉取与 CI 相同的提交
+git status --short          # 必须为空；有本地改动先查明来处
+git pull --ff-only origin main
+git log -1 --oneline        # 与刚推送的提交一致
+
+# 2. 依赖与构建（与 CI 相同命令）
+npm ci
+npm run build
+
+# 3. 重启服务
+sudo systemctl restart blazecv
+systemctl status blazecv --no-pager -l
+
+# 4. 仅当 nginx 配置有改动时
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+生产环境变量由 systemd unit 的 `EnvironmentFile` 提供，至少包含：
+
+```ini
+DATABASE_URL=postgres://...
+COOKIE_SECURE=true
+EXPORT_INTERNAL_ORIGIN=http://127.0.0.1:3000
+EXPORT_CDP_URL=http://127.0.0.1:9222        # 或 EXPORT_CHROME_PATH=/usr/bin/chromium
+SMS_PROVIDER=...        # aliyun | tencent | http
+EMAIL_PROVIDER=...      # smtp | http
+```
+
+`EXPORT_INTERNAL_ORIGIN` 必须设置：反向代理提供 HTTPS 时，否则服务端导出会访问
+`https://localhost:3000` 失败。
+
+> docker compose 部署路径保留：`cp .env.example .env && docker compose up -d --build`，
+> 同样必须先完成第 1–6 步；容器内 `EXPORT_INTERNAL_ORIGIN` 需指向容器内服务地址。
+
+### 第 7 步：线上冒烟（必须逐项确认）
+
+```bash
+# 首页与静态资源
+curl -fsSI https://aetouban.cn/ | head -n 3          # 200
+# 认证接口存活（未登录应返回 {"user":null}）
+curl -fsS https://aetouban.cn/api/auth/me
+# 服务端导出依赖的浏览器与字体（登录后从编辑器导出一次 PNG/PDF 验证）
+```
+
+浏览器手工确认：
+
+1. 首页模板市场正常渲染（48 套模板入口）；
+2. 手机号验证码 / 邮箱密码登录可用（验证码通道已配置时）；
+3. 编辑器打开模板，右侧预览正常、左栏无纵向滚动；
+4. 导出 PNG / PDF 各一次，页面与预览一致、图片不丢；
+5. 登录面板「登录设备」能列出当前会话。
+
+### 第 8 步：失败回滚
+
+```bash
+cd /opt/blazecv
+git reset --hard <上一版本 SHA>      # 部署前记录的回滚点
+npm ci
+npm run build
+sudo systemctl restart blazecv
+# 如本次包含数据迁移且需要回退数据：
+# psql "$DATABASE_URL" < /root/blazecv-YYYY-MM-DD-HHMM.sql
+```
+
+数据库 schema 变更原则上是**向后兼容的增量**（只加列/表），旧代码可以继续运行；
+若必须回退数据，使用第 6 步的备份。回滚后同样执行第 7 步冒烟。
+
+## 部署前检查清单（逐项打勾后才可上线）
+
+- [ ] 变更计划已列明受影响文件，未夹带无关改动
+- [ ] `npx tsc --noEmit` 零错误
+- [ ] `npm run build` 成功
+- [ ] `node scripts/verify.mjs` 47/47（含无运行时错误、左栏无滚动）
+- [ ] `node scripts/acceptance.mjs` 25/25
+- [ ] 账号/会话改动：`node scripts/verify-sessions.mjs` 11/11
+- [ ] 短信/邮件通道改动：对应 E2E 全过
+- [ ] 已提交并推送，GitHub Actions `Quality Checks` 绿
+- [ ] 已记录线上回滚点（`git rev-parse HEAD`）
+- [ ] 已备份生产数据库、`.env`、systemd/nginx 配置
+- [ ] 部署后冒烟五项全部通过
+- [ ] 失败时已按回滚流程恢复并复测
 
 ## 验收命令
 
@@ -97,6 +343,11 @@ node scripts/show-compare.mjs <token...>       # 编辑页渲染 vs 原始页
 node scripts/export-10.mjs "<模板名>" ...       # 编辑页 vs 真实导出 PNG（旧版，整页拉伸）
 node scripts/export-pages-compare.mjs "<模板名>" ...  # 逐页对齐对比（推荐）
 node scripts/export-batch.mjs   # 批量（BATCH_START/BATCH_LIMIT/BATCH_TOKENS，JSONL 断点续跑）
+
+# 5) 账号与登录专项
+node scripts/verify-sessions.mjs
+node scripts/verify-sms-login.mjs    # 需应用接入测试短信网关
+node scripts/verify-reset.mjs        # 需应用接入本地 SMTP
 ```
 
 对比图输出：`tools/audit/compare/*.png`；审计结果：`tools/audit/fidelity/`。
@@ -151,6 +402,10 @@ node scripts/export-batch.mjs   # 批量（BATCH_START/BATCH_LIMIT/BATCH_TOKENS�
 - 共享 CSS：`public/wondercv-assets/template-base.css`；图标字体：`iconfont.woff2`。
 - 图片代理：`src/app/api/img-proxy/route.ts`；导出：`src/app/api/export-image`、
   `src/app/api/export-pdf`；渲染入口：`/audit?doc=<base64>`（`window.__auditApply`）。
+- 认证：`src/lib/server/auth.ts`（会话/密码/账号解析）、`verify-code.ts`（验证码）、
+  `sms.ts` / `email.ts`（通道）、`sessions.ts`（设备管理）；登录 UI 在
+  `src/components/account/CloudMenu.tsx`。
+- 环境变量模板：`.env.example`（部署前按生产实际填写，`.env` 不入库）。
 
 ## 已知边界
 
