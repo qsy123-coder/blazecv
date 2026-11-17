@@ -64,6 +64,13 @@ export default async function TemplatesPage() {
             </Link>
           ))}
         </div>
+        <p className="mt-4 text-[11px] text-slate-400">
+          第一次使用？可以查看
+          <Link href="/faq" className="mx-1 text-blue-600 hover:underline">
+            简历模板常见问题
+          </Link>
+          ，了解 A4 分页、导出格式与数据保存方式。
+        </p>
       </section>
     ) : null;
 
