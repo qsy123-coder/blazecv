@@ -1,0 +1,76 @@
+services:
+  web:
+    build: .
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      PORT: "3000"
+      DATABASE_URL: postgres://blazecv:${POSTGRES_PASSWORD:-blazecv_dev_password}@db:5432/blazecv
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      # 手机号短信验证码
+      SMS_PROVIDER: ${SMS_PROVIDER:-}
+      SMS_CODE_TTL_SECONDS: ${SMS_CODE_TTL_SECONDS:-300}
+      SMS_CODE_RESEND_SECONDS: ${SMS_CODE_RESEND_SECONDS:-60}
+      ALIYUN_SMS_ACCESS_KEY_ID: ${ALIYUN_SMS_ACCESS_KEY_ID:-}
+      ALIYUN_SMS_ACCESS_KEY_SECRET: ${ALIYUN_SMS_ACCESS_KEY_SECRET:-}
+      ALIYUN_SMS_SIGN_NAME: ${ALIYUN_SMS_SIGN_NAME:-}
+      ALIYUN_SMS_TEMPLATE_CODE: ${ALIYUN_SMS_TEMPLATE_CODE:-}
+      ALIYUN_SMS_REGION: ${ALIYUN_SMS_REGION:-cn-hangzhou}
+      ALIYUN_SMS_TEMPLATE_PARAM: ${ALIYUN_SMS_TEMPLATE_PARAM:-}
+      TENCENT_SMS_SECRET_ID: ${TENCENT_SMS_SECRET_ID:-}
+      TENCENT_SMS_SECRET_KEY: ${TENCENT_SMS_SECRET_KEY:-}
+      TENCENT_SMS_SDK_APP_ID: ${TENCENT_SMS_SDK_APP_ID:-}
+      TENCENT_SMS_SIGN_NAME: ${TENCENT_SMS_SIGN_NAME:-}
+      TENCENT_SMS_TEMPLATE_ID: ${TENCENT_SMS_TEMPLATE_ID:-}
+      TENCENT_SMS_REGION: ${TENCENT_SMS_REGION:-ap-guangzhou}
+      TENCENT_SMS_TEMPLATE_PARAMS: ${TENCENT_SMS_TEMPLATE_PARAMS:-}
+      SMS_HTTP_URL: ${SMS_HTTP_URL:-}
+      SMS_HTTP_TOKEN: ${SMS_HTTP_TOKEN:-}
+      SMS_HTTP_TEMPLATE: ${SMS_HTTP_TEMPLATE:-}
+      # 邮箱验证码（找回密码）
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-}
+      EMAIL_SMTP_HOST: ${EMAIL_SMTP_HOST:-}
+      EMAIL_SMTP_PORT: ${EMAIL_SMTP_PORT:-587}
+      EMAIL_SMTP_SECURE: ${EMAIL_SMTP_SECURE:-false}
+      EMAIL_SMTP_USER: ${EMAIL_SMTP_USER:-}
+      EMAIL_SMTP_PASS: ${EMAIL_SMTP_PASS:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
+      EMAIL_FROM_NAME: ${EMAIL_FROM_NAME:-BlazeCV}
+      EMAIL_SMTP_REJECT_UNAUTHORIZED: ${EMAIL_SMTP_REJECT_UNAUTHORIZED:-true}
+      EMAIL_HTTP_URL: ${EMAIL_HTTP_URL:-}
+      EMAIL_HTTP_TOKEN: ${EMAIL_HTTP_TOKEN:-}
+    expose:
+      - "3000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: blazecv
+      POSTGRES_USER: blazecv
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-blazecv_dev_password}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./infra/db/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U blazecv -d blazecv"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - web
+
+volumes:
+  pgdata:

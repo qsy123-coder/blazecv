@@ -1,0 +1,20 @@
+{
+  "auth": {
+    "token": ""
+  },
+  "network": {
+    "concurrency": 4,
+    "delayMs": 120,
+    "timeoutMs": 30000,
+    "retries": 4
+  },
+  "download": {
+    "details": true,
+    "images": true
+  },
+  "detail": {
+    "needBlog": false,
+    "needMoban": true,
+    "needTag": true
+  }
+}

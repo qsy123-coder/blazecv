@@ -1,0 +1,49 @@
+import puppeteer from "puppeteer-core";
+
+const browser = await puppeteer.connect({
+  browserURL: process.env.CDP_URL ?? "http://127.0.0.1:9226",
+  defaultViewport: { width: 1500, height: 1300 },
+  protocolTimeout: 120000,
+});
+const page = await browser.newPage();
+await page.goto("http://127.0.0.1:3000/templates", { waitUntil: "networkidle2", timeout: 60000 });
+await page.waitForSelector("[data-catalog-card]", { timeout: 30000 });
+const input = await page.$('input[aria-label="搜索模板"]');
+await input.type("应届生通用简历模板");
+await new Promise((r) => setTimeout(r, 700));
+await page.evaluate(() => {
+  const card = [...document.querySelectorAll("[data-catalog-card]")].find((c) => c.textContent.includes("应届生通用"));
+  [...(card?.querySelectorAll("button") ?? [])].find((b) => b.textContent.includes("使用此模板"))?.click();
+});
+await page.waitForFunction(() => location.pathname === "/editor", { timeout: 30000 });
+await page.waitForSelector('iframe[title="原站模板 1:1 预览"]', { timeout: 30000 });
+await new Promise((r) => setTimeout(r, 1600));
+
+await page.evaluate(() => {
+  const summary = [...document.querySelectorAll("summary")].find((s) => s.textContent?.includes("添加模块"));
+  summary?.click();
+});
+await new Promise((r) => setTimeout(r, 300));
+const clicked = await page.evaluate(() => {
+  const btn = [...document.querySelectorAll("button")].find((b) => (b.textContent || "").trim() === "教育经历");
+  btn?.click();
+  return Boolean(btn);
+});
+await new Promise((r) => setTimeout(r, 1800));
+
+const info = await page.evaluate(() => {
+  const f = document.querySelector('iframe[title="原站模板 1:1 预览"]');
+  const d = f?.contentDocument;
+  if (!d) return null;
+  const opts = [...d.querySelectorAll(".option")].filter((o) => getComputedStyle(o).display !== "none");
+  return opts.map((o) => ({
+    title: (o.querySelector(".module-title-wrapper .title")?.textContent || "").trim(),
+    cls: [...o.classList].filter((c) => ["edus", "works", "custom", "project_experience", "orgs", "honor", "extras", "personal_summary"].includes(c)).join(","),
+    containers: o.querySelectorAll(".section-item-container").length,
+    text: (o.textContent || "").replace(/\s+/g, " ").slice(0, 120),
+  }));
+});
+console.log("clicked", clicked);
+console.log(JSON.stringify(info, null, 1));
+await page.close();
+browser.disconnect();

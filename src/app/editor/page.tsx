@@ -1,0 +1,11 @@
+import type { Metadata } from "next";
+import AppShell from "@/components/AppShell";
+
+export const metadata: Metadata = {
+  title: "编辑简历 · BlazeCV",
+  description: "在线编辑简历，实时 A4 预览，导出 PDF、图片与 Word。",
+};
+
+export default function EditorPage() {
+  return <AppShell />;
+}

@@ -1,0 +1,46 @@
+{
+  "name": "blazecv",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "verify": "node scripts/verify.mjs",
+    "shots": "node scripts/shots.mjs",
+    "templates:generate": "node scripts/generate-wondercv-templates.mjs tools/wondercv-crawler src/lib/templates.generated.ts",
+    "templates:catalog": "node scripts/build-template-catalog.mjs tools/wondercv-crawler ."
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.5.16",
+    "bcryptjs": "^3.0.3",
+    "dexie": "^4.0.10",
+    "docx": "^9.5.1",
+    "html-to-image": "^1.11.11",
+    "next": "^15.1.0",
+    "nodemailer": "^10.6.0",
+    "pg": "^8.23.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "zustand": "^5.0.2"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^22.10.2",
+    "@types/nodemailer": "^8.0.2",
+    "@types/pg": "^8.23.1",
+    "@types/react": "^19.0.2",
+    "@types/react-dom": "^19.0.2",
+    "adm-zip": "^0.6.1",
+    "autoprefixer": "^10.4.20",
+    "cheerio": "^1.2.0",
+    "pdf-lib": "^1.17.1",
+    "postcss": "^8.4.49",
+    "puppeteer-core": "^25.17.0",
+    "sharp": "^0.35.5",
+    "smtp-server": "^3.21.6",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.2"
+  }
+}

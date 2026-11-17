@@ -1,0 +1,207 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: #eef0f3;
+  color: #111827;
+  font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB",
+    system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::selection {
+  background: #dbeafe;
+}
+
+@layer components {
+  .field-label {
+    @apply mb-1 block text-[11px] font-medium text-slate-500;
+  }
+
+  .field-input {
+    @apply w-full rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-[13px] text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100;
+  }
+
+  .field-textarea {
+    @apply field-input resize-y leading-relaxed;
+  }
+}
+
+.thin-scroll::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.thin-scroll::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+.thin-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* 编辑页左栏：默认宽度按视口给，可被分隔条拖拽的 px 宽度覆盖。 */
+.editor-panel {
+  container-type: inline-size;
+  width: clamp(420px, 60vw, 1100px);
+}
+
+/* 高屏默认略窄，给预览更多空间。 */
+@media (min-height: 1050px) {
+  .editor-panel {
+    width: clamp(420px, 52vw, 1100px);
+  }
+}
+
+.editor-cards {
+  columns: 1;
+  column-gap: 8px;
+}
+
+.editor-cards > * {
+  break-inside: avoid;
+  margin-bottom: 8px;
+}
+
+/* 列数跟随左栏自身宽度（拖拽分界线时即时变化）。 */
+@container (min-width: 480px) {
+  .editor-cards {
+    columns: 2;
+  }
+}
+
+@container (min-width: 740px) {
+  .editor-cards {
+    columns: 3;
+  }
+}
+
+/* 矮屏（≤800px）再收紧间距，1366×768 也能放下。 */
+@media (max-height: 800px) {
+  .editor-cards {
+    padding: 8px;
+    column-gap: 8px;
+  }
+
+  .editor-cards > * {
+    margin-bottom: 6px;
+  }
+
+  .editor-cards .p-3 {
+    padding: 8px;
+  }
+
+  .editor-cards .p-2\.5 {
+    padding: 6px;
+  }
+
+  .editor-cards .py-2 {
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+
+  .editor-cards .space-y-4 > * + * {
+    margin-top: 8px;
+  }
+
+  .editor-cards .space-y-3 > * + * {
+    margin-top: 8px;
+  }
+
+  .editor-cards .space-y-2 > * + * {
+    margin-top: 6px;
+  }
+
+  .editor-cards > p {
+    display: none;
+  }
+}
+
+.page-frame {
+  background: #ffffff;
+  overflow: hidden;
+  position: relative;
+}
+
+.page-shadow {
+  box-shadow:
+    0 0 0 1px rgba(15, 23, 42, 0.06),
+    0 14px 40px rgba(15, 23, 42, 0.14);
+}
+
+[data-overflow="true"] {
+  outline: 2px dashed #f59e0b;
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+
+.print-sheet {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+  }
+
+  .app-shell,
+  .share-shell {
+    display: none !important;
+  }
+
+  .print-sheet {
+    display: block !important;
+  }
+
+  .print-sheet .page-frame {
+    box-shadow: none !important;
+    width: 210mm !important;
+    height: auto !important;
+    min-height: 297mm !important;
+    overflow: visible !important;
+  }
+
+  .print-sheet .print-page {
+    height: 297mm !important;
+    min-height: 297mm !important;
+    overflow: hidden !important;
+    break-after: page;
+  }
+
+  .print-sheet .print-page:last-child {
+    break-after: auto;
+  }
+
+  .print-sheet .page-frame * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  [data-overflow="true"] {
+    outline: none !important;
+  }
+}

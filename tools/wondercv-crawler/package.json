@@ -1,0 +1,17 @@
+{
+  "name": "wondercv-crawler",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "采集 wondercv.com 全部简历模板（元数据 / cv_data / 预览图），导出为 blazecv 可用数据集",
+  "scripts": {
+    "crawl": "node src/crawl.js",
+    "crawl:list": "node src/crawl.js --list-only",
+    "crawl:no-images": "node src/crawl.js --no-images",
+    "index": "node src/crawl.js --index-only",
+    "export": "node src/export.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

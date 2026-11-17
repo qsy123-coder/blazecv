@@ -1,0 +1,21 @@
+node_modules
+.next
+.next-test
+out
+dist
+*.log
+.env
+.env*.local
+.data
+.DS_Store
+
+# Local browser profiles / test artifacts
+.edge-*
+Projectsblazecv.edge-*
+*.tsbuildinfo
+.tmp-*
+
+# Crawler data and audit outputs
+tools/wondercv-crawler/data
+tools/wondercv-crawler/dist
+tools/audit

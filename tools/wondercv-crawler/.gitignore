@@ -1,0 +1,4 @@
+data/
+dist/
+config.json
+!config.example.json
