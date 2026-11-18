@@ -220,42 +220,73 @@ $env:NODE_USE_ENV_PROXY='1'
 ### 第 6 步：生产备份（部署前最后一步）
 
 ```bash
-# 记录当前线上版本，作为回滚点
-cd /opt/blazecv && git rev-parse HEAD
+ssh ubuntu@43.135.10.175          # 使用本机已授权的 SSH 密钥
+B=~/backups/$(date +%Y%m%d-%H%M%S)
+mkdir -p "$B"
 
-# 数据库备份（生产使用 PostgreSQL）
-pg_dump "$DATABASE_URL" > /root/blazecv-$(date +%F-%H%M).sql
+# 环境变量与 systemd 配置（敏感文件不要进 git）
+cp /opt/blazecv/.env "$B/env"
+cp /etc/systemd/system/blazecv.service "$B/blazecv.service"
 
-# 若使用 PGlite（单机）
-tar -czf /root/blazecv-pglite-$(date +%F-%H%M).tar.gz /opt/blazecv/.data/pglite
+# 数据库：生产默认 PGlite（/opt/blazecv/.data/pglite）
+tar -czf "$B/pglite.tar.gz" -C /opt/blazecv .data/pglite
+# 如已配置 DATABASE_URL（PostgreSQL），改用：
+# pg_dump "$DATABASE_URL" > "$B/db.sql"
 
-# 环境变量与 systemd/nginx 配置留档（敏感文件不要进 git）
-cp /opt/blazecv/.env /root/blazecv.env.$(date +%F-%H%M)
-cp /etc/systemd/system/blazecv.service /root/ 2>/dev/null || true
+# 记录当前构建，作为回滚点
+cp /opt/blazecv/.next/BUILD_ID "$B/BUILD_ID.old" 2>/dev/null || true
 ```
 
 ## 生产部署流程（systemd）
 
+生产机 `ubuntu@43.135.10.175` 的约定：
+
+- `/opt/blazecv` **不是 git 仓库**，是运行目录；systemd unit 的
+  `WorkingDirectory=/opt/blazecv/.next/standalone`、`EnvironmentFile=/opt/blazecv/.env`。
+- 源码在 `~/blazecv-release`（git clone）。**禁止在 `/opt/blazecv` 里直接 `next build`**：
+  构建会改写正在服务的 `.next`，导致线上 chunk 404 / 页面卡加载。
+- 正确做法：在 release 克隆里旁路构建，补齐 standalone 的 `static` / `public`，再停服换目录。
+
 ```bash
-ssh root@43.135.10.175
-cd /opt/blazecv
+ssh ubuntu@43.135.10.175
+cd ~/blazecv-release
 
-# 1. 确认工作区干净、拉取与 CI 相同的提交
-git status --short          # 必须为空；有本地改动先查明来处
-git pull --ff-only origin main
-git log -1 --oneline        # 与刚推送的提交一致
+# 1. 切到与 CI 相同的提交
+git fetch origin main
+git checkout -f <刚推送的完整 SHA>      # 或 git reset --hard origin/main
+git rev-parse --short HEAD
 
-# 2. 依赖与构建（与 CI 相同命令）
+# 2. 依赖（package.json / package-lock.json 有变化时才执行）
+git diff --stat <上一版本>..HEAD -- package.json package-lock.json
 npm ci
+
+# 3. 旁路构建（线上继续服务旧版本）
 npm run build
 
-# 3. 重启服务
-sudo systemctl restart blazecv
-systemctl status blazecv --no-pager -l
+# 4. 补齐 standalone 静态资源（Next 不会自动放进 standalone）
+mkdir -p .next/standalone/.next/static
+cp -a .next/static/. .next/standalone/.next/static/
+rm -rf .next/standalone/public .next/standalone/.data
+cp -a public .next/standalone/public
 
-# 4. 仅当 nginx 配置有改动时
-sudo nginx -t && sudo systemctl reload nginx
+# 5. 原子切换（失败执行第 8 步回滚）
+TS=$(date +%Y%m%d-%H%M%S)
+sudo systemctl stop blazecv
+sudo mv /opt/blazecv/.next /opt/blazecv/.next.prev-$TS
+sudo mv .next /opt/blazecv/.next
+sudo systemctl start blazecv
+sleep 4
+systemctl is-active blazecv
+
+# 6. 内部冒烟（绕过 CDN）
+curl -sI http://127.0.0.1:3000/ | grep -iE 'HTTP/|cache-control'
+# 期望：Cache-Control: public, max-age=0, must-revalidate
+curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:3000/guides
 ```
+
+> 仅当 nginx 配置有改动时才 `sudo nginx -t && sudo systemctl reload nginx`。
+> 服务端导出依赖 `.env` 的 `EXPORT_CHROME_PATH`（或可连通的 `EXPORT_CDP_URL`），
+> 部署后从编辑器导出一次 PNG/PDF 验证。
 
 生产环境变量由 systemd unit 的 `EnvironmentFile` 提供，至少包含：
 
@@ -295,13 +326,17 @@ curl -fsS https://aetouban.cn/api/auth/me
 ### 第 8 步：失败回滚
 
 ```bash
-cd /opt/blazecv
-git reset --hard <上一版本 SHA>      # 部署前记录的回滚点
-npm ci
-npm run build
-sudo systemctl restart blazecv
-# 如本次包含数据迁移且需要回退数据：
-# psql "$DATABASE_URL" < /root/blazecv-YYYY-MM-DD-HHMM.sql
+ssh ubuntu@43.135.10.175
+TS=<部署时的时间戳>      # 切换时生成的 .next.prev-$TS
+
+sudo systemctl stop blazecv
+sudo rm -rf /opt/blazecv/.next
+sudo mv /opt/blazecv/.next.prev-$TS /opt/blazecv/.next
+sudo systemctl start blazecv
+curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:3000/
+
+# 仅当本次数据迁移改坏了数据时才回退数据库：
+# tar -xzf ~/backups/<备份目录>/pglite.tar.gz -C /opt/blazecv
 ```
 
 数据库 schema 变更原则上是**向后兼容的增量**（只加列/表），旧代码可以继续运行；
