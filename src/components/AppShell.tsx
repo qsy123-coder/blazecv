@@ -22,6 +22,8 @@ import {
   exportExactWord,
 } from "@/lib/exact-export";
 import { downloadText, readFileAsText, safeFileName, todayStamp } from "@/lib/utils";
+import { useMembership } from "@/lib/use-membership";
+import { ensurePrintWatermark } from "@/lib/watermark-client";
 import { Toolbar } from "@/components/Toolbar";
 import { EditorSplit } from "@/components/editor/EditorSplit";
 import { TemplateModal } from "@/components/TemplateModal";
@@ -40,9 +42,15 @@ export default function AppShell() {
   const redo = useResumeStore((state) => state.redo);
   const setSaveState = useResumeStore((state) => state.setSaveState);
   const setStorageError = useResumeStore((state) => state.setStorageError);
+  const membership = useMembership();
 
   const [templatesOpen, setTemplatesOpen] = useState(false);
   const [remoteConflict, setRemoteConflict] = useState(false);
+  const [exportProgress, setExportProgress] = useState<{
+    label: string;
+    detail: string;
+    startedAt: number;
+  } | null>(null);
   const hydratedOnce = useRef(false);
 
   useEffect(() => {
@@ -197,18 +205,47 @@ export default function AppShell() {
     );
   }
 
+  const runExport = async (
+    label: string,
+    task: (onProgress: (detail: string) => void) => Promise<boolean>,
+  ): Promise<boolean> => {
+    const startedAt = Date.now();
+    setExportProgress({ label, detail: "准备中…", startedAt });
+    try {
+      return await task((detail) =>
+        setExportProgress((current) =>
+          current ? { ...current, detail } : { label, detail, startedAt },
+        ),
+      );
+    } finally {
+      setExportProgress(null);
+    }
+  };
+
   const handleExportPdf = async () => {
     if (getExactTemplateToken(doc)) {
-      if (await exportExactPdf(doc, doc.title)) return;
+      const ok = await runExport("导出 PDF（图片版）", (onProgress) =>
+        exportExactPdf(doc, doc.title, onProgress),
+      );
+      if (ok) return;
       window.alert("原站模板 PDF 生成失败，请改用 PNG 或稍后重试。");
       return;
     }
-    window.print();
+    // Classic templates print from the live DOM; the server gate cannot help.
+    const cleanup = membership.active ? null : ensurePrintWatermark();
+    try {
+      window.print();
+    } finally {
+      cleanup?.();
+    }
   };
 
   const handleExportPdfText = async () => {
     if (getExactTemplateToken(doc)) {
-      if (await exportExactPdfText(doc, doc.title)) return;
+      const ok = await runExport("导出 PDF（文字版）", (onProgress) =>
+        exportExactPdfText(doc, doc.title, onProgress),
+      );
+      if (ok) return;
       window.alert("文字版 PDF 生成失败，请改用图片版 PDF。");
       return;
     }
@@ -217,7 +254,10 @@ export default function AppShell() {
 
   const handleExportPng = async () => {
     if (getExactTemplateToken(doc)) {
-      if (await exportExactPng(doc, doc.title)) return;
+      const ok = await runExport("导出 PNG 图片", (onProgress) =>
+        exportExactPng(doc, doc.title, "", onProgress),
+      );
+      if (ok) return;
       window.alert("原站模板图片生成失败，请改用「导出 PDF」或稍后重试。");
       return;
     }
@@ -231,6 +271,7 @@ export default function AppShell() {
           nodes[index],
           doc.title,
           nodes.length > 1 ? `-p${index + 1}` : "",
+          { watermark: !membership.active },
         );
         await new Promise((resolve) => setTimeout(resolve, 150));
       }
@@ -242,11 +283,14 @@ export default function AppShell() {
   const handleExportWord = async () => {
     try {
       if (getExactTemplateToken(doc)) {
-        if (await exportExactWord(doc, doc.title)) return;
+        const ok = await runExport("导出 Word（图片版）", (onProgress) =>
+          exportExactWord(doc, doc.title, onProgress),
+        );
+        if (ok) return;
         window.alert("原站模板 Word 生成失败，请改用 PDF 或 PNG。");
         return;
       }
-      await exportWord(doc);
+      await exportWord(doc, { watermark: !membership.active });
     } catch (error) {
       window.alert(`导出 Word 失败：${(error as Error).message}`);
     }
@@ -254,7 +298,7 @@ export default function AppShell() {
 
   const handleExportWordText = async () => {
     try {
-      await exportWord(doc);
+      await exportWord(doc, { watermark: !membership.active });
     } catch (error) {
       window.alert(`导出 Word（文字版）失败：${(error as Error).message}`);
     }
@@ -383,6 +427,50 @@ export default function AppShell() {
         }}
         onClose={() => setTemplatesOpen(false)}
       />
+
+      {exportProgress ? <ExportProgressOverlay state={exportProgress} /> : null}
     </>
+  );
+}
+
+function ExportProgressOverlay({
+  state,
+}: {
+  state: { label: string; detail: string; startedAt: number };
+}) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 250);
+    return () => window.clearInterval(timer);
+  }, []);
+  const seconds = Math.max(0, Math.floor((now - state.startedAt) / 1000));
+  return (
+    <div
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/30 p-4 backdrop-blur-[1px]"
+      role="dialog"
+      aria-modal="true"
+      aria-live="polite"
+    >
+      <div className="w-full max-w-[340px] rounded-xl border border-slate-200 bg-white p-5 shadow-2xl">
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 h-5 w-5 shrink-0 animate-spin rounded-full border-2 border-slate-200 border-t-slate-700" />
+          <div className="min-w-0">
+            <div className="text-[13px] font-semibold text-slate-800">
+              {state.label}
+            </div>
+            <div className="mt-1 text-[12px] leading-5 text-slate-600">
+              {state.detail}
+            </div>
+          </div>
+        </div>
+        <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-slate-100">
+          <div className="h-full w-full animate-pulse rounded-full bg-slate-400" />
+        </div>
+        <div className="mt-2 flex items-center justify-between text-[10px] text-slate-400">
+          <span>请勿关闭页面</span>
+          <span className="tabular-nums">已用时 {seconds} 秒</span>
+        </div>
+      </div>
+    </div>
   );
 }

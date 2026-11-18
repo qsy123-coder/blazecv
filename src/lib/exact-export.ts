@@ -7,6 +7,9 @@ import {
 } from "./exact-template";
 import { downloadBlob, safeFileName, todayStamp } from "./utils";
 
+/** Optional UI callback so long exports can show a progress message. */
+export type ExportProgress = (detail: string) => void;
+
 const EXTRA_CSS = `
 * {
   -webkit-print-color-adjust: exact !important;
@@ -18,6 +21,14 @@ const EXTRA_CSS = `
 
 const CSS_LINK_ID = "__blazecv_export_css";
 const FONT_STYLE_ID = "__blazecv_export_font";
+
+/** The server is authoritative for the payment gate; notify the editor UI. */
+function noteWatermark(response: Response): void {
+  if (response.headers.get("X-Watermark") !== "1") return;
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("blazecv:watermarked"));
+  }
+}
 
 async function iconfontCss(): Promise<string> {
   try {
@@ -173,18 +184,22 @@ async function inlineExternalImages(node: HTMLElement) {
  */
 async function renderExactPng(
   doc: ResumeDoc,
+  onProgress?: ExportProgress,
 ): Promise<{ dataUrl: string; width: number; height: number } | null> {
   const token = getExactTemplateToken(doc);
   if (!token) return null;
 
   // Preferred: server-side native browser render (pixel-faithful to the editor).
   try {
+    onProgress?.("正在请求服务端渲染…");
     const res = await fetch("/api/export-image", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ doc }),
     });
     if (res.ok) {
+      noteWatermark(res);
+      onProgress?.("正在读取渲染结果…");
       const height = Number(res.headers.get("X-Page-Height") ?? 0);
       const blob = await res.blob();
       const dataUrl = await new Promise<string>((resolve) => {
@@ -200,6 +215,7 @@ async function renderExactPng(
     /* fall back to html-to-image below */
   }
 
+  onProgress?.("服务端渲染不可用，正在本地渲染…");
   const response = await fetch(`/template-pages/${encodeURIComponent(token)}.html`);
   if (!response.ok) return null;
   const source = await response.text();
@@ -332,9 +348,13 @@ async function sliceIntoPages(
   return pages;
 }
 
-async function renderExactPages(doc: ResumeDoc): Promise<PageImage[] | null> {
-  const result = await renderExactPng(doc);
+async function renderExactPages(
+  doc: ResumeDoc,
+  onProgress?: ExportProgress,
+): Promise<PageImage[] | null> {
+  const result = await renderExactPng(doc, onProgress);
   if (!result) return null;
+  onProgress?.("正在按 A4 分页…");
   return sliceIntoPages(result.dataUrl, result.width, result.height);
 }
 
@@ -350,10 +370,15 @@ export async function exportExactPng(
   doc: ResumeDoc,
   title: string,
   suffix = "",
+  onProgress?: ExportProgress,
 ): Promise<boolean> {
-  const pages = await renderExactPages(doc);
+  onProgress?.("正在生成页面…");
+  const pages = await renderExactPages(doc, onProgress);
   if (!pages || pages.length === 0) return false;
   for (let i = 0; i < pages.length; i += 1) {
+    onProgress?.(
+      pages.length > 1 ? `正在下载第 ${i + 1}/${pages.length} 页…` : "正在下载图片…",
+    );
     const response = await fetch(pages[i].dataUrl);
     const blob = await response.blob();
     const pageTag = pages.length > 1 ? `-p${i + 1}` : "";
@@ -366,9 +391,12 @@ export async function exportExactPng(
 export async function exportExactPdf(
   doc: ResumeDoc,
   title: string,
+  onProgress?: ExportProgress,
 ): Promise<boolean> {
-  const pages = await renderExactPages(doc);
+  onProgress?.("正在生成页面…");
+  const pages = await renderExactPages(doc, onProgress);
   if (!pages || pages.length === 0) return false;
+  onProgress?.("正在封装 PDF…");
   const { PDFDocument } = await import("pdf-lib");
   const pdf = await PDFDocument.create();
   const widthPt = EXACT_WIDTH_PX * 0.75; // 595.5pt (A4 width)
@@ -393,14 +421,18 @@ export async function exportExactPdf(
 export async function exportExactPdfText(
   doc: ResumeDoc,
   title: string,
+  onProgress?: ExportProgress,
 ): Promise<boolean> {
   try {
+    onProgress?.("服务端正在生成文字版 PDF…");
     const res = await fetch("/api/export-pdf", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ doc }),
     });
     if (res.ok) {
+      noteWatermark(res);
+      onProgress?.("正在下载 PDF…");
       const blob = await res.blob();
       downloadBlob(blob, `${safeFileName(title)}-文字版-${todayStamp()}.pdf`);
       return true;
@@ -409,15 +441,18 @@ export async function exportExactPdfText(
     /* fall through */
   }
   // Fallback: image PDF so the user still gets a file.
-  return exportExactPdf(doc, title);
+  return exportExactPdf(doc, title, onProgress);
 }
 
 export async function exportExactWord(
   doc: ResumeDoc,
   title: string,
+  onProgress?: ExportProgress,
 ): Promise<boolean> {
-  const pages = await renderExactPages(doc);
+  onProgress?.("正在生成页面…");
+  const pages = await renderExactPages(doc, onProgress);
   if (!pages || pages.length === 0) return false;
+  onProgress?.("正在封装 Word…");
 
   // A4 page sized to the image (1 CSS px = 15 twips at 96dpi), ~2px slack.
   const widthTwips = Math.round(EXACT_WIDTH_PX * 15);
