@@ -48,8 +48,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run typecheck
-        run: npx tsc --noEmit
-
+      # next-env.d.ts 引用 .next/types/routes.d.ts，全新克隆里该文件不存在，
+      # 必须先 build 生成再 typecheck，否则 tsc 直接 TS6053 失败。
       - name: Run build
         run: npm run build
+
+      - name: Run typecheck
+        run: npx tsc --noEmit

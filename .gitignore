@@ -19,3 +19,5 @@ Projectsblazecv.edge-*
 tools/wondercv-crawler/data
 tools/wondercv-crawler/dist
 tools/audit
+.next-gate
+.chrome-gate/

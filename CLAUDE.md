@@ -127,7 +127,7 @@
 ## 测试策略
 
 - **脚本级回归为主**（项目没有单元测试框架）：
-  - `scripts/acceptance.mjs`：导出与交互验收（25 项）
+  - `scripts/acceptance.mjs`：导出与交互验收（28 项；可用 `ACC_GROUP=word|formats|ui` 分段跑）
   - `scripts/verify.mjs`：全量回归（47 项，含运行时错误与左栏无滚动）
   - `scripts/verify-sessions.mjs`：登录设备/会话管理接口（11 项，纯 HTTP）
   - `scripts/verify-sms-login.mjs`：手机号验证码登录（5 项，内置短信网关接收端）
@@ -176,7 +176,7 @@ npm run start
 ```powershell
 $env:CDP_URL = "http://127.0.0.1:9227"
 node scripts/verify.mjs          # 必须 47/47，且「无运行时错误」「左栏一屏内无滚动」PASS
-node scripts/acceptance.mjs      # 25 项全过
+node scripts/acceptance.mjs      # 28 项全过（受限环境可分段：ACC_GROUP=word|formats|ui）
 ```
 
 ### 第 4 步：按改动范围补跑专项测试
@@ -313,7 +313,7 @@ sudo systemctl restart blazecv
 - [ ] `npx tsc --noEmit` 零错误
 - [ ] `npm run build` 成功
 - [ ] `node scripts/verify.mjs` 47/47（含无运行时错误、左栏无滚动）
-- [ ] `node scripts/acceptance.mjs` 25/25
+- [ ] `node scripts/acceptance.mjs` 28/28（或三组分段全过）
 - [ ] 账号/会话改动：`node scripts/verify-sessions.mjs` 11/11
 - [ ] 短信/邮件通道改动：对应 E2E 全过
 - [ ] 已提交并推送，GitHub Actions `Quality Checks` 绿
@@ -329,7 +329,7 @@ sudo systemctl restart blazecv
 （或设置 `EXPORT_CHROME_PATH` 指向 Chrome/Edge；`/api/export-image`、`/api/export-pdf` 依赖它）。
 
 ```bash
-# 1) 导出与交互验收（浏览器自动化，25 项）
+# 1) 导出与交互验收（浏览器自动化，28 项）
 node scripts/acceptance.mjs
 
 # 2) 全量回归（47 项：首页/导出/分享/云端/版本/多页/模板库/左栏无滚动/无运行时错误）
