@@ -87,7 +87,7 @@ page.on("dialog", (dialog) => {
 const cdp = await page.createCDPSession();
 await cdp.send("Page.setDownloadBehavior", { behavior: "allow", downloadPath: downloadDir });
 await cdp.send("Storage.clearDataForOrigin", {
-  origin: "http://127.0.0.1:3000",
+  origin: new URL(APP_URL).origin,
   storageTypes: "indexeddb,cookies,local_storage",
 });
 
@@ -236,7 +236,7 @@ check("删除简历", true);
 await page.goto("about:blank");
 await sleep(300);
 await cdp.send("Storage.clearDataForOrigin", {
-  origin: "http://127.0.0.1:3000",
+  origin: new URL(APP_URL).origin,
   storageTypes: "indexeddb,cookies",
 });
 await page.goto(`${APP_URL}/editor?template=business`, {
