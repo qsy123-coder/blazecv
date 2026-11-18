@@ -115,6 +115,22 @@ export default async function TemplateTagPage({
     ...layouts,
   ];
 
+  const faq = [
+    { q: `如何挑选${tag}简历模板？`, a: meta.summary },
+    {
+      q: `${tag}简历需要写几页？`,
+      a: `优先控制在 1 页 A4 内，把与目标岗位最相关的内容放在第一页。经历较多时可以扩展到 2 页；BlazeCV 会按 A4 高度自动分页，不会把纸张拉长或压扁内容。`,
+    },
+    {
+      q: `这些${tag}简历模板可以免费导出吗？`,
+      a: `可以。本页 ${count} 套模板都支持在线编辑、A4 实时预览，并可免费导出 PDF（图片版/文字版）、PNG 和 Word，无需注册账号。`,
+    },
+    {
+      q: `${tag}简历模板会丢失原有排版吗？`,
+      a: `不会。模板使用原站页面的真实 DOM 与 CSS 渲染，姓名字号、行距、页头花纹和模块顺序都按原版保留；预览、PNG、PDF 与 Word 图片版共用同一套渲染结果。`,
+    },
+  ];
+
   return (
     <TemplateCollectionPage
       heading={`${tag}简历模板`}
@@ -127,6 +143,7 @@ export default async function TemplateTagPage({
       canonical={canonical}
       related={related}
       relatedTitle="相关用途与版式"
+      faq={faq}
     />
   );
 }

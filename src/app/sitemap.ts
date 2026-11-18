@@ -64,6 +64,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         lastModified,
         changeFrequency: "weekly" as const,
         priority: 0.7,
+        // Cover images are the only visual asset per template; listing them
+        // lets Google/Bing surface template pages in image search too.
+        images: entry.preview
+          ? [`${SITE_URL}${entry.preview}`]
+          : undefined,
       })),
     ];
   } catch {

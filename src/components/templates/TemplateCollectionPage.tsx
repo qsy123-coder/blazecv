@@ -21,6 +21,7 @@ export interface TemplateCollectionPageProps {
   canonical: string;
   related: RelatedCollection[];
   relatedTitle: string;
+  faq?: Array<{ q: string; a: string }>;
 }
 
 const SHOWN = 36;
@@ -36,6 +37,7 @@ export function TemplateCollectionPage({
   canonical,
   related,
   relatedTitle,
+  faq,
 }: TemplateCollectionPageProps) {
   const shown = items.slice(0, SHOWN);
 
@@ -69,6 +71,18 @@ export function TemplateCollectionPage({
           { "@type": "ListItem", position: 3, name: breadcrumbLabel, item: canonical },
         ],
       },
+      ...(faq && faq.length > 0
+        ? [
+            {
+              "@type": "FAQPage",
+              mainEntity: faq.map((item) => ({
+                "@type": "Question",
+                name: item.q,
+                acceptedAnswer: { "@type": "Answer", text: item.a },
+              })),
+            },
+          ]
+        : []),
     ],
   };
 
@@ -171,6 +185,22 @@ export function TemplateCollectionPage({
             内容超出一页时会自动分页，不会把纸张拉长。
           </p>
         </section>
+
+        {faq && faq.length > 0 ? (
+          <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6">
+            <h2 className="text-[18px] font-semibold tracking-tight text-slate-900">
+              {breadcrumbLabel}常见问题
+            </h2>
+            <div className="mt-4 space-y-4">
+              {faq.map((item) => (
+                <div key={item.q}>
+                  <h3 className="text-[13px] font-semibold text-slate-800">{item.q}</h3>
+                  <p className="mt-1.5 text-[12px] leading-6 text-slate-500">{item.a}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         {related.length > 0 ? (
           <section className="mt-8">
