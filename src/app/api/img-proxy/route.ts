@@ -24,9 +24,19 @@ export async function GET(request: Request) {
   if (url.protocol !== "http:" && url.protocol !== "https:") {
     return NextResponse.json({ error: "bad protocol" }, { status: 400 });
   }
+  // Some CDNs (logo.wondercv.com) hotlink-protect and answer a non-browser
+  // User-Agent with HTTP 200 + an empty body, which used to become a broken
+  // image in exports. Use browser-like headers and reject empty bodies.
+  const BROWSER_UA =
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
   try {
     const upstream = await fetch(url.toString(), {
-      headers: { "User-Agent": "BlazeCV-Export/1.0" },
+      headers: {
+        "User-Agent": BROWSER_UA,
+        Referer: "https://www.wondercv.com/",
+        Accept: "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+        "Accept-Language": "zh-CN,zh;q=0.9",
+      },
       cache: "no-store",
     });
     if (!upstream.ok) {
@@ -36,6 +46,9 @@ export async function GET(request: Request) {
       );
     }
     const buffer = Buffer.from(await upstream.arrayBuffer());
+    if (buffer.length === 0) {
+      return NextResponse.json({ error: "upstream empty" }, { status: 502 });
+    }
     const contentType =
       upstream.headers.get("content-type") ?? "application/octet-stream";
     return new NextResponse(buffer, {
