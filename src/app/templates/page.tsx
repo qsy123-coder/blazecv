@@ -2,21 +2,35 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { TemplateCatalog } from "@/components/templates/TemplateCatalog";
 import { getCatalog } from "@/lib/catalog-server";
+import {
+  LAYOUT_KEYS,
+  LAYOUT_LABELS,
+  indexableTags,
+  layoutHref,
+  tagHref,
+  tagStats,
+} from "@/lib/seo-collections";
 import { OG_IMAGE, SITE_NAME } from "@/lib/seo";
 
-const TITLE = "全部简历模板 · 4127 套免费在线简历模板";
+const TITLE = "个人简历模板 · 4127 套免费在线简历模板";
 const DESC =
-  "浏览 4127 套简历模板：单栏、侧栏、时间轴、横幅、深色、分栏、标签等版式，覆盖应届生、社招、技术、运营、设计、教师、金融等用途。原站模板 1:1 渲染，在线编辑并导出 PDF、PNG、Word。";
+  "4127 套个人简历模板免费在线编辑：单栏、侧栏、时间轴、横幅、深色、分栏等版式，覆盖应届生、校招、实习、社招、金融、银行、互联网、产品、运营、设计等求职场景。原站模板 1:1 渲染，A4 实时预览，免费导出 PDF、PNG、Word。";
 
 export const metadata: Metadata = {
   title: TITLE,
   description: DESC,
   alternates: { canonical: "/templates" },
   keywords: [
+    "个人简历模板",
     "全部简历模板",
     "简历模板库",
     "免费简历模板",
+    "简历模板下载",
+    "简历模板免费下载",
+    "简历制作",
+    "在线简历制作",
     "应届生简历模板",
+    "校招简历模板",
     "社招简历模板",
     "单栏简历模板",
     "侧栏简历模板",
@@ -43,36 +57,91 @@ export default async function TemplatesPage() {
   const catalog = await getCatalog().catch(() => null);
   const popular = catalog?.templates.slice(0, 36) ?? [];
 
-  const seoLinks =
-    popular.length > 0 ? (
-      <section className="mt-12 rounded-2xl border border-slate-200 bg-white p-6">
-        <h2 className="text-[18px] font-semibold tracking-tight text-slate-900">
-          热门简历模板
-        </h2>
-        <p className="mt-1.5 text-[12px] leading-5 text-slate-500">
-          按模板库顺序整理的热门模板，点击可查看模板详情、示例内容与 A4 预览。
-          找不到合适的版式时，可在上方使用版式与用途筛选，或搜索模板名称。
-        </p>
-        <div className="mt-4 grid gap-x-6 gap-y-2 sm:grid-cols-2 lg:grid-cols-3">
-          {popular.map((entry) => (
-            <Link
-              key={entry.id}
-              href={`/templates/${entry.token}`}
-              className="truncate text-[12px] text-slate-600 transition hover:text-blue-600 hover:underline"
-            >
-              {entry.sourceName || entry.name}
+  const tagCounts = catalog
+    ? new Map(tagStats(catalog).map((row) => [row.tag, row.count]))
+    : new Map<string, number>();
+  const tags = catalog ? indexableTags(catalog, 24) : [];
+  const layouts = catalog
+    ? LAYOUT_KEYS.map((key) => ({
+        key,
+        label: LAYOUT_LABELS[key],
+        count: catalog.templates.filter((entry) => entry.layout === key).length,
+      })).filter((row) => row.count > 0)
+    : [];
+
+  const seoLinks = (
+    <>
+      {tags.length > 0 ? (
+        <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6">
+          <h2 className="text-[18px] font-semibold tracking-tight text-slate-900">
+            热门简历模板分类
+          </h2>
+          <p className="mt-1.5 text-[12px] leading-5 text-slate-500">
+            按求职阶段、行业与岗位整理的个人简历模板分类。每个分类都可以查看该用途下的全部模板、
+            版式与示例内容，再进入编辑器替换成自己的信息。
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {tags.map((tag) => (
+              <Link
+                key={tag}
+                href={tagHref(tag)}
+                className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-[11px] text-slate-600 transition hover:border-blue-300 hover:bg-white hover:text-blue-600"
+              >
+                {tag}简历模板
+                <span className="ml-1 text-slate-400">{tagCounts.get(tag) ?? 0}</span>
+              </Link>
+            ))}
+          </div>
+
+          <h3 className="mt-6 text-[13px] font-semibold text-slate-800">
+            按版式浏览简历模板
+          </h3>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {layouts.map((row) => (
+              <Link
+                key={row.key}
+                href={layoutHref(row.key)}
+                className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] text-slate-600 transition hover:border-blue-300 hover:text-blue-600"
+              >
+                {row.label}简历模板
+                <span className="ml-1 text-slate-400">{row.count}</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {popular.length > 0 ? (
+        <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6">
+          <h2 className="text-[18px] font-semibold tracking-tight text-slate-900">
+            热门简历模板
+          </h2>
+          <p className="mt-1.5 text-[12px] leading-5 text-slate-500">
+            按模板库顺序整理的热门模板，点击可查看模板详情、示例内容与 A4 预览。
+            找不到合适的版式时，可在上方使用版式与用途筛选，或搜索模板名称。
+          </p>
+          <div className="mt-4 grid gap-x-6 gap-y-2 sm:grid-cols-2 lg:grid-cols-3">
+            {popular.map((entry) => (
+              <Link
+                key={entry.id}
+                href={`/templates/${entry.token}`}
+                className="truncate text-[12px] text-slate-600 transition hover:text-blue-600 hover:underline"
+              >
+                {entry.sourceName || entry.name}
+              </Link>
+            ))}
+          </div>
+          <p className="mt-4 text-[11px] text-slate-400">
+            第一次使用？可以查看
+            <Link href="/faq" className="mx-1 text-blue-600 hover:underline">
+              简历模板常见问题
             </Link>
-          ))}
-        </div>
-        <p className="mt-4 text-[11px] text-slate-400">
-          第一次使用？可以查看
-          <Link href="/faq" className="mx-1 text-blue-600 hover:underline">
-            简历模板常见问题
-          </Link>
-          ，了解 A4 分页、导出格式与数据保存方式。
-        </p>
-      </section>
-    ) : null;
+            ，了解 A4 分页、导出格式与数据保存方式。
+          </p>
+        </section>
+      ) : null}
+    </>
+  );
 
   return <TemplateCatalog seoLinks={seoLinks} />;
 }

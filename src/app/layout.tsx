@@ -20,9 +20,12 @@ export const metadata: Metadata = {
   category: "productivity",
   keywords: [
     "简历模板",
+    "个人简历模板",
     "在线简历",
     "简历制作",
+    "在线简历制作",
     "免费简历模板",
+    "简历模板下载",
     "应届生简历",
     "简历模板库",
     "PDF 简历",

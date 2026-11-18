@@ -40,24 +40,36 @@ export function TemplateCatalog({ seoLinks }: { seoLinks?: ReactNode }) {
   const [page, setPage] = useState(0);
   const [using, setUsing] = useState<string | null>(null);
   const [preview, setPreview] = useState<CatalogTemplate | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlTag = params.get("tag");
+    const urlLayout = params.get("layout");
+    if (urlTag) setTag(urlTag);
+    if (urlLayout && TEMPLATE_GROUPS.some((group) => group.layout === urlLayout)) {
+      setLayout(urlLayout as LayoutKind);
+    }
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
-    void fetch("/template-catalog.json")
+    setError(null);
+    void fetch("/template-catalog.json", { signal: AbortSignal.timeout(15000) })
       .then((response) => {
-        if (!response.ok) throw new Error("模板库加载失败");
+        if (!response.ok) throw new Error(`模板库加载失败（HTTP ${response.status}）`);
         return response.json() as Promise<CatalogFile>;
       })
       .then((data) => {
         if (!cancelled) setCatalog(data);
       })
       .catch((caught: Error) => {
-        if (!cancelled) setError(caught.message);
+        if (!cancelled) setError(caught.message || "模板库加载失败");
       });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [reloadKey]);
 
   const entries = catalog?.templates ?? [];
 
@@ -147,8 +159,11 @@ export function TemplateCatalog({ seoLinks }: { seoLinks?: ReactNode }) {
       await saveResume(doc);
       router.push(`/editor?id=${encodeURIComponent(doc.id)}`);
     } catch {
-      setUsing(null);
       setError("创建简历失败，请检查浏览器存储空间。");
+    } finally {
+      // 成功跳转后也要复位：返回模板库时页面可能从客户端缓存恢复，
+      // 残留的 using 会让卡片一直显示「创建中…」且 hover 按钮不可用。
+      setUsing(null);
     }
   };
 
@@ -160,11 +175,11 @@ export function TemplateCatalog({ seoLinks }: { seoLinks?: ReactNode }) {
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="text-[26px] font-bold tracking-tight text-slate-900">
-              模板库
+              全部简历模板
             </h1>
             <p className="mt-1.5 text-[12px] text-slate-500">
               {catalog
-                ? `共 ${catalog.count} 套 · ${catalog.withPreview} 套原预览图 · ${catalog.withContent ?? 0} 套含示例内容`
+                ? `个人简历模板库共 ${catalog.count} 套 · ${catalog.withPreview} 套原预览图 · ${catalog.withContent ?? 0} 套含示例内容`
                 : "正在加载模板库…"}
             </p>
             <p className="mt-1 text-[10px] text-slate-400">
@@ -245,21 +260,37 @@ export function TemplateCatalog({ seoLinks }: { seoLinks?: ReactNode }) {
           ))}
         </div>
 
-        {error ? (
+        {error && catalog ? (
           <p className="mt-6 rounded-md bg-rose-50 px-3 py-2 text-[12px] text-rose-600">
             {error}
           </p>
         ) : null}
 
         {!catalog ? (
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {Array.from({ length: 8 }).map((_, index) => (
-              <div
-                key={index}
-                className="h-[360px] animate-pulse rounded-xl border border-slate-200 bg-white"
-              />
-            ))}
-          </div>
+          error ? (
+            <div className="mt-6 rounded-xl border border-rose-200 bg-rose-50 px-4 py-8 text-center">
+              <p className="text-[12px] text-rose-600">{error}</p>
+              <p className="mt-1 text-[11px] text-rose-400">
+                常见于静态资源/网络异常，重试通常可恢复。
+              </p>
+              <button
+                type="button"
+                onClick={() => setReloadKey((key) => key + 1)}
+                className="mt-3 rounded-md bg-rose-600 px-3 py-1.5 text-[11px] font-medium text-white transition hover:bg-rose-700"
+              >
+                重新加载
+              </button>
+            </div>
+          ) : (
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {Array.from({ length: 8 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="h-[360px] animate-pulse rounded-xl border border-slate-200 bg-white"
+                />
+              ))}
+            </div>
+          )
         ) : pageItems.length === 0 ? (
           <div className="mt-8 rounded-xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center text-[12px] text-slate-400">
             没有匹配的模板，试试清除筛选。

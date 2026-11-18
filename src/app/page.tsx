@@ -10,6 +10,18 @@ export const metadata: Metadata = {
   title: { absolute: TITLE },
   description: DESC,
   alternates: { canonical: `${SITE_URL}/` },
+  keywords: [
+    "简历模板",
+    "个人简历模板",
+    "免费简历模板",
+    "简历模板下载",
+    "在线简历制作",
+    "简历制作",
+    "应届生简历模板",
+    "社招简历模板",
+    "A4 简历",
+    "BlazeCV",
+  ],
   openGraph: {
     type: "website",
     locale: "zh_CN",

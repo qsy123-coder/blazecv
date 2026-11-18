@@ -5,6 +5,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { UseCatalogTemplate } from "@/components/templates/UseCatalogTemplate";
 import { getCatalog, getCatalogTemplate } from "@/lib/catalog-server";
 import type { CatalogTemplate } from "@/lib/catalog";
+import { isLinkableTag, tagHref } from "@/lib/seo-collections";
 import { OG_IMAGE, SITE_NAME, SITE_URL } from "@/lib/seo";
 
 const LAYOUT_LABEL: Record<string, string> = {
@@ -68,8 +69,11 @@ export async function generateMetadata({
     entry.name && entry.name !== sourceName
       ? `${sourceName} - ${entry.name}`
       : sourceName;
-  const title = `${label} 简历模板`;
-  const description = `${entry.desc || sourceName}。${entry.tags
+  // Many catalog names already end with 简历模板/求职模板; appending again would
+  // produce "XX简历模板 简历模板" in the SERP snippet.
+  const title = /简历|求职|招聘/.test(label) ? label : `${label} 简历模板`;
+  const base = (entry.desc || sourceName).replace(/[。；;\s]+$/, "");
+  const description = `${base}。${entry.tags
     .slice(0, 6)
     .join("、")}；支持在线编辑、A4 实时预览，免费导出 PDF、PNG、Word。`;
   return {
@@ -202,14 +206,24 @@ export default async function TemplateDetailPage({
             <p className="mt-4 text-[13px] leading-6 text-slate-600">{entry.desc}</p>
 
             <div className="mt-4 flex flex-wrap gap-1.5">
-              {entry.tags.slice(0, 10).map((tag) => (
-                <span
-                  key={tag}
-                  className="rounded-full bg-white px-2.5 py-1 text-[10px] text-slate-500 ring-1 ring-slate-200"
-                >
-                  {tag}
-                </span>
-              ))}
+              {entry.tags.slice(0, 10).map((tag) =>
+                isLinkableTag(tag) ? (
+                  <Link
+                    key={tag}
+                    href={tagHref(tag)}
+                    className="rounded-full bg-white px-2.5 py-1 text-[10px] text-slate-500 ring-1 ring-slate-200 transition hover:text-blue-600 hover:ring-blue-300"
+                  >
+                    {tag}简历模板
+                  </Link>
+                ) : (
+                  <span
+                    key={tag}
+                    className="rounded-full bg-white px-2.5 py-1 text-[10px] text-slate-500 ring-1 ring-slate-200"
+                  >
+                    {tag}
+                  </span>
+                ),
+              )}
             </div>
 
             <div className="mt-6 flex flex-wrap items-center gap-3">
