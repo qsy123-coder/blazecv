@@ -15,6 +15,33 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
+        // 预渲染 HTML 不能长缓存：它引用带哈希的 chunk，重新构建后旧 HTML 会请求
+        // 已不存在的 chunk（静态资源 400），模板库会一直停在骨架屏/加载动画。
+        // 交给 CDN 缓存但必须每次回源校验（304 很便宜），部署后自动失效。
+        source: "/",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },
+        ],
+      },
+      {
+        source: "/templates",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },
+        ],
+      },
+      {
+        source: "/templates/:path*",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },
+        ],
+      },
+      {
+        source: "/resumes",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },
+        ],
+      },
+      {
         // Captured template snapshots and their assets never change in place.
         source: "/template-pages/:path*",
         headers: [
