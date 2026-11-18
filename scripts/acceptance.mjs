@@ -6,12 +6,26 @@ import { mkdtemp, readdir, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-const BASE = "http://127.0.0.1:3000";
-const browser = await puppeteer.connect({
-  browserURL: process.env.CDP_URL ?? "http://127.0.0.1:9226",
-  defaultViewport: { width: 1500, height: 1300 },
-  protocolTimeout: 300000,
-});
+const BASE = (process.env.APP_URL ?? "http://127.0.0.1:3000").replace(/\/$/, "");
+const CDP_URL = process.env.CDP_URL ?? "";
+const EDGE =
+  process.env.EXPORT_CHROME_PATH ??
+  "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
+const viewport = { width: 1500, height: 1300 };
+// 默认自带浏览器，避免共享 CDP 实例被其它进程清理/抢占导致整轮验收中断。
+const browser = CDP_URL
+  ? await puppeteer.connect({
+      browserURL: CDP_URL,
+      defaultViewport: viewport,
+      protocolTimeout: 300000,
+    })
+  : await puppeteer.launch({
+      executablePath: EDGE,
+      headless: true,
+      defaultViewport: viewport,
+      protocolTimeout: 300000,
+      args: ["--no-first-run", "--disable-gpu", "--disable-dev-shm-usage"],
+    });
 
 async function meanDiff(bufA, bufB) {
   const am = await sharp(bufA).metadata();
@@ -32,20 +46,39 @@ const rec = (name, ok, detail) => {
 };
 
 async function openEditor(name) {
-  const page = await browser.newPage();
-  await page.goto(`${BASE}/templates`, { waitUntil: "networkidle2", timeout: 60000 });
-  await page.waitForSelector("[data-catalog-card]", { timeout: 30000 });
-  const input = await page.$('input[aria-label="搜索模板"]');
-  await input.type(name);
-  await new Promise((r) => setTimeout(r, 700));
-  await page.evaluate((n) => {
-    const card = [...document.querySelectorAll("[data-catalog-card]")].find((c) => c.textContent.includes(n));
-    [...(card?.querySelectorAll("button") ?? [])].find((b) => b.textContent.includes("使用此模板"))?.click();
-  }, name);
-  await page.waitForFunction(() => location.pathname === "/editor", { timeout: 30000 });
-  await page.waitForSelector('iframe[title="原站模板 1:1 预览"]', { timeout: 30000 });
-  await new Promise((r) => setTimeout(r, 1400));
-  return page;
+  let lastError = null;
+  // 连续重负载后渲染进程偶发 detached frame；换新页面重试即可恢复。
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    if (attempt > 0) await new Promise((r) => setTimeout(r, 1000));
+    const page = await browser.newPage();
+    try {
+      await page.goto(`${BASE}/templates`, { waitUntil: "networkidle2", timeout: 60000 });
+      await page.waitForSelector("[data-catalog-card]", { timeout: 30000 });
+      const input = await page.$('input[aria-label="搜索模板"]');
+      await input.type(name);
+      // 过滤是客户端状态更新，固定 sleep 在机器繁忙时会抢跑；等目标卡片真正出现。
+      await page.waitForFunction(
+        (needle) =>
+          [...document.querySelectorAll("[data-catalog-card]")].some((card) =>
+            card.textContent?.includes(needle),
+          ),
+        { timeout: 20000 },
+        name,
+      );
+      await page.evaluate((n) => {
+        const card = [...document.querySelectorAll("[data-catalog-card]")].find((c) => c.textContent.includes(n));
+        [...(card?.querySelectorAll("button") ?? [])].find((b) => b.textContent.includes("使用此模板"))?.click();
+      }, name);
+      await page.waitForFunction(() => location.pathname === "/editor", { timeout: 30000 });
+      await page.waitForSelector('iframe[title="原站模板 1:1 预览"]', { timeout: 30000 });
+      await new Promise((r) => setTimeout(r, 1400));
+      return page;
+    } catch (error) {
+      lastError = error;
+      await page.close().catch(() => undefined);
+    }
+  }
+  throw lastError;
 }
 
 async function exportFormat(name, label, ext) {
@@ -150,19 +183,27 @@ const namesAll = [
   "西安电子科技大学大学生简历模板",
 ];
 
+// 可按组执行（ACC_GROUP=word|formats|ui），便于在受限环境里分段跑完整门禁。
+const GROUP = (process.env.ACC_GROUP ?? "all").toLowerCase();
+const group = (name) => GROUP === "all" || GROUP === name;
+
 // 1) Word 图片版单页校验 for all 10
-for (const n of namesAll) await validateWordImage(n);
+if (group("word")) {
+  for (const n of namesAll) await validateWordImage(n);
+}
 
 // 2) Full 5-format validation for 3 representative templates
-for (const n of ["应届生通用简历模板", "2026用户运营应届生简历模板", "项目经理简历模板"]) {
-  await validatePdfImage(n);
-  await validatePdfText(n);
-  await validatePng(n);
-  await validateWordText(n);
+if (group("formats")) {
+  for (const n of ["应届生通用简历模板", "2026用户运营应届生简历模板", "项目经理简历模板"]) {
+    await validatePdfImage(n);
+    await validatePdfText(n);
+    await validatePng(n);
+    await validateWordText(n);
+  }
 }
 
 // 3) Theme controls affect exact preview
-{
+if (group("ui")) {
   const page = await openEditor("应届生通用简历模板");
   const read = () => page.evaluate(() => {
     const f = document.querySelector('iframe[title="原站模板 1:1 预览"]');
@@ -237,7 +278,7 @@ for (const n of ["应届生通用简历模板", "2026用户运营应届生简历
 }
 
 // 3b) 自动适配一页：必须靠字号/行距/页边距调整到 1 页（非缩放），并截图变化
-{
+if (group("ui")) {
   const page = await openEditor("2026用户运营应届生简历模板");
   const read = () => page.evaluate(() => {
     const f = document.querySelector('iframe[title="原站模板 1:1 预览"]');
@@ -281,11 +322,8 @@ for (const n of ["应届生通用简历模板", "2026用户运营应届生简历
 }
 
 // 4) City edit sync on a template that shows city
-{
-  // Find a template whose profile shows 城市/现居/所在地.
-  const page = await browser.newPage();
-  await page.goto(`${BASE}/templates`, { waitUntil: "networkidle2", timeout: 60000 });
-  // Just test on 应届生通用 if it shows city; else scan a few.
+if (group("ui")) {
+  // 直接逐个模板打开，省掉一个多余的空页面（重负载下少一个渲染进程）。
   const candidates = ["应届生通用简历模板", "项目经理简历模板", "生物医药行业简历模板", "西安电子科技大学大学生简历模板", "社会招聘通用简历模板"];
   let tested = false;
   for (const n of candidates) {
@@ -326,12 +364,12 @@ for (const n of ["应届生通用简历模板", "2026用户运营应届生简历
     await pg.close();
   }
   if (!tested) rec("城市同步", true, "抽查的模板均不显示城市字段（模板版式不含城市），跳过");
-  await page.close();
 }
 
 const pass = results.filter((r) => r.ok).length;
 console.log(`\nSUMMARY ${pass}/${results.length} pass`);
 const fails = results.filter((r) => !r.ok);
 if (fails.length) fails.forEach((f) => console.log("  FAIL:", f.name, f.detail));
-browser.disconnect();
+if (CDP_URL) browser.disconnect();
+else await browser.close();
 process.exitCode = fails.length ? 1 : 0;
