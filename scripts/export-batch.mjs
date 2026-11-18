@@ -36,6 +36,7 @@ const VIEW_W = Number(process.env.BATCH_VIEWPORT_WIDTH ?? 2000);
 const VIEW_H = Number(process.env.BATCH_VIEWPORT_HEIGHT ?? 1200);
 const PROFILE = path.join(ROOT, ".edge-batch");
 const RESTART_EVERY = Number(process.env.BATCH_RESTART_EVERY ?? 40);
+const RECYCLE_SERVER_EVERY = Number(process.env.BATCH_RECYCLE_SERVER_EVERY ?? 0);
 const RETRY_FAILED = process.env.BATCH_RETRY_FAILED === "1";
 const ORIGIN = "http://127.0.0.1:3000";
 
@@ -595,6 +596,15 @@ for (const token of todo) {
   if (sinceRestart >= RESTART_EVERY) {
     console.log(`restart browser after ${sinceRestart} templates`);
     await launchBrowser();
+  }
+  if (RECYCLE_SERVER_EVERY > 0 && i > 1 && (i - 1) % RECYCLE_SERVER_EVERY === 0) {
+    // 长跑时服务端进程会累积无头浏览器连接/内存，定期重启避免中途掉线。
+    console.log(`recycle server at ${i}`);
+    try {
+      await ensureServer(true);
+    } catch (error) {
+      console.log(`recycle server failed: ${String(error?.message ?? error).slice(0, 120)}`);
+    }
   }
   await ensureServer(false);
   let row;
