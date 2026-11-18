@@ -182,7 +182,11 @@ export function TemplateCollectionPage({
           </ul>
           <p className="mt-4 text-[12px] leading-6 text-slate-500">
             选好模板后打开编辑器，左侧填写内容即可在右侧看到 A4 实时预览；模板版式、字号、行距与配色均可在「排版与主题」中调整，
-            内容超出一页时会自动分页，不会把纸张拉长。
+            内容超出一页时会自动分页，不会把纸张拉长。不确定内容怎么写，可以先看
+            <Link href="/guides" className="mx-1 text-blue-600 hover:underline">
+              写简历指南
+            </Link>
+            。
           </p>
         </section>
 

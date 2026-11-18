@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getCatalog } from "@/lib/catalog-server";
+import { GUIDES, guideHref } from "@/lib/guides";
 import {
   LAYOUT_KEYS,
   indexableTags,
@@ -30,6 +31,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "monthly",
       priority: 0.6,
     },
+    {
+      url: `${SITE_URL}/guides`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+    ...GUIDES.map((guide) => ({
+      url: `${SITE_URL}${guideHref(guide.slug)}`,
+      lastModified: new Date(guide.updated),
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
+    })),
   ];
 
   try {

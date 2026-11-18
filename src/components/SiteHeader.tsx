@@ -12,6 +12,11 @@ const NAV = [
     isActive: (path: string) => path.startsWith("/templates"),
   },
   {
+    href: "/guides",
+    label: "写简历指南",
+    isActive: (path: string) => path.startsWith("/guides"),
+  },
+  {
     href: "/resumes",
     label: "我的简历",
     isActive: (path: string) => path.startsWith("/resumes"),

@@ -313,7 +313,11 @@ export default async function TemplateDetailPage({
               >
                 全部模板库
               </Link>
-              按版式或用途继续挑选。
+              按版式或用途继续挑选；不确定内容怎么写，可以查看
+              <Link href="/guides" className="mx-1 text-blue-600 hover:underline">
+                写简历指南
+              </Link>
+              。
             </p>
           </div>
         </section>

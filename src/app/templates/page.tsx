@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { TemplateCatalog } from "@/components/templates/TemplateCatalog";
 import { getCatalog } from "@/lib/catalog-server";
+import { GUIDES, guideHref } from "@/lib/guides";
 import {
   LAYOUT_KEYS,
   LAYOUT_LABELS,
@@ -110,6 +111,27 @@ export default async function TemplatesPage() {
           </div>
         </section>
       ) : null}
+
+      <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6">
+        <h2 className="text-[18px] font-semibold tracking-tight text-slate-900">
+          写简历指南
+        </h2>
+        <p className="mt-1.5 text-[12px] leading-5 text-slate-500">
+          选好模板只是第一步。应届生没有实习怎么写、校招模板怎么选、一页还是两页，
+          这几篇指南给出可以直接套用的结构和示例。
+        </p>
+        <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {GUIDES.map((guide) => (
+            <Link
+              key={guide.slug}
+              href={guideHref(guide.slug)}
+              className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-[12px] text-slate-600 transition hover:border-blue-200 hover:bg-white hover:text-blue-600"
+            >
+              {guide.title}
+            </Link>
+          ))}
+        </div>
+      </section>
 
       {popular.length > 0 ? (
         <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6">
