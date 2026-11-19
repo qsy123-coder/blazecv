@@ -25075,8 +25075,8 @@
    "id": "wcx-VrOC-UM",
    "token": "VrOC-UM",
    "sourceToken": "VrOC-UM",
-   "name": "超级简历模板 - 无实习经验",
-   "desc": "专业大牛简历模板，超级简历模板 - 无实习经验简历范文，帮您制作专业简历。",
+   "name": "示例模板 - 无实习经验",
+   "desc": "专业大牛简历模板，示例模板 - 无实习经验简历范文，帮您制作专业简历。",
    "tags": [
     "运营",
     "实习生",
@@ -25101,7 +25101,7 @@
    "preview": null,
    "content": "/template-content/VrOC-UM.json",
    "people": 411938,
-   "sourceName": "超级简历模板 - 无实习经验"
+   "sourceName": "示例模板 - 无实习经验"
   },
   {
    "id": "wcx-FqpuLb8",
@@ -50322,8 +50322,8 @@
    "id": "wcx-m2cUiCE",
    "token": "m2cUiCE",
    "sourceToken": "m2cUiCE",
-   "name": "超级简历模板 - 学生求职 (EN)",
-   "desc": "专业大牛简历模板，超级简历模板 - 学生求职 (EN)简历范文，帮您制作专业简历。",
+   "name": "示例模板 - 学生求职 (EN)",
+   "desc": "专业大牛简历模板，示例模板 - 学生求职 (EN)简历范文，帮您制作专业简历。",
    "tags": [
     "英文"
    ],
@@ -50346,7 +50346,7 @@
    "preview": null,
    "content": "/template-content/m2cUiCE.json",
    "people": 149661,
-   "sourceName": "超级简历模板 - 学生求职 (EN)"
+   "sourceName": "示例模板 - 学生求职 (EN)"
   },
   {
    "id": "wcx-ce0aa68458e18907",
@@ -96484,7 +96484,7 @@
    "token": "8BYPFH8",
    "sourceToken": "8BYPFH8",
    "name": "金融实习生个人简历",
-   "desc": "专业大牛简历模板，超级简历_金融实习简历范文，帮您制作专业简历。",
+   "desc": "专业大牛简历模板，示例_金融实习简历范文，帮您制作专业简历。",
    "tags": [
     "大学生",
     "金融",
