@@ -145,11 +145,13 @@ interface XunhuResponse {
   data?: {
     status?: string;
     total_fee?: string;
+    total_amount?: string;
     transaction_id?: string;
     out_trade_order?: string;
   };
   status?: string;
   total_fee?: string;
+  total_amount?: string;
   transaction_id?: string;
   out_trade_order?: string;
 }
@@ -246,7 +248,7 @@ export class XunhuProvider implements PayProvider {
     if (payload.out_trade_order && payload.out_trade_order !== outTradeNo) {
       return { state: "unknown" };
     }
-    const amountFen = yuanToFen(payload.total_fee);
+    const amountFen = yuanToFen(payload.total_amount ?? payload.total_fee);
     if ((payload.status ?? "").toUpperCase() === "OD") {
       return {
         state: "paid",
