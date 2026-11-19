@@ -49,21 +49,37 @@ export async function isActiveMember(userId: string): Promise<boolean> {
   return status.active;
 }
 
+export interface ExportGate {
+  /** Whether the membership/payment feature is enabled (PAY_ENABLED=true). */
+  payEnabled: boolean;
+  /** Whether this request may export at all (members only when payEnabled). */
+  allowed: boolean;
+  /** Active membership (meaningful only when payEnabled). */
+  active: boolean;
+  loggedIn: boolean;
+}
+
 /**
- * Whether an export must carry a watermark.
+ * Authoritative export gate.
  *
- * PAY_ENABLED=false keeps the pre-payment behaviour (no watermark) so the
- * existing acceptance/fidelity suites keep their baseline. When payments are on,
- * anonymous users and expired members get a watermark, and a database failure
- * fails closed (watermark) rather than granting a free clean export.
+ * When payments are enabled, exports are members-only: anonymous and expired
+ * members are blocked (403 upstream), and a database failure fails closed
+ * (blocked) rather than granting a free export. When payments are disabled
+ * (local dev / acceptance) exports stay open with no watermark, preserving the
+ * pre-payment behaviour the suites rely on.
  */
-export async function exportWatermarkRequired(): Promise<boolean> {
-  if (process.env.PAY_ENABLED !== "true") return false;
+export async function exportGate(): Promise<ExportGate> {
+  if (process.env.PAY_ENABLED !== "true") {
+    return { payEnabled: false, allowed: true, active: false, loggedIn: false };
+  }
   try {
     const user = await getCurrentUser();
-    if (!user) return true;
-    return !(await isActiveMember(user.id));
+    if (!user) {
+      return { payEnabled: true, allowed: false, active: false, loggedIn: false };
+    }
+    const active = await isActiveMember(user.id);
+    return { payEnabled: true, allowed: active, active, loggedIn: true };
   } catch {
-    return true;
+    return { payEnabled: true, allowed: false, active: false, loggedIn: false };
   }
 }

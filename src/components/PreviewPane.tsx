@@ -11,6 +11,8 @@ import {
 } from "@/lib/exact-template";
 import { useResumeStore } from "@/store/useResumeStore";
 import { A4_HEIGHT_PX, A4_WIDTH_PX } from "@/lib/paper";
+import { useMembership } from "@/lib/use-membership";
+import { WatermarkOverlay } from "@/components/preview/WatermarkOverlay";
 
 export function PreviewPane({
   doc,
@@ -31,6 +33,8 @@ export function PreviewPane({
   const [exactHeight, setExactHeight] = useState(EXACT_HEIGHT_PX);
   const exactToken = getExactTemplateToken(doc);
   const setOverflow = useResumeStore((state) => state.setOverflow);
+  const membership = useMembership();
+  const showWatermark = membership.payEnabled && !membership.active;
 
   useEffect(() => {
     setExactHeight(EXACT_HEIGHT_PX);
@@ -154,6 +158,7 @@ export function PreviewPane({
                         width={EXACT_WIDTH_PX}
                         offsetY={pageIndex * EXACT_HEIGHT_PX}
                         clipHeight={EXACT_HEIGHT_PX}
+                        watermark={showWatermark}
                         onUnavailable={markUnavailable}
                         onHeight={pageIndex === 0 ? setExactHeight : undefined}
                       />
@@ -185,9 +190,10 @@ export function PreviewPane({
                     <div
                       data-resume-page
                       className="page-frame page-shadow"
-                      style={{ width: "210mm", height: "297mm" }}
+                      style={{ width: "210mm", height: "297mm", position: "relative" }}
                     >
                       <ResumePaper doc={pageDoc} tokens={tokens} />
+                      {showWatermark ? <WatermarkOverlay /> : null}
                     </div>
                   </div>
                 </div>

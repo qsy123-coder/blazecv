@@ -7,6 +7,8 @@ export interface MembershipState {
   plan: string | null;
   expiresAt: string | null;
   loggedIn: boolean;
+  /** Whether the membership/payment feature is enabled (PAY_ENABLED=true). */
+  payEnabled: boolean;
   loading: boolean;
 }
 
@@ -15,6 +17,7 @@ const INITIAL: MembershipState = {
   plan: null,
   expiresAt: null,
   loggedIn: false,
+  payEnabled: false,
   loading: true,
 };
 
@@ -35,6 +38,7 @@ export function useMembership() {
         plan: typeof data.plan === "string" ? data.plan : null,
         expiresAt: typeof data.expiresAt === "string" ? data.expiresAt : null,
         loggedIn: Boolean(data.loggedIn),
+        payEnabled: Boolean(data.payEnabled),
         loading: false,
       });
     } catch {

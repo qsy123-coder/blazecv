@@ -8,6 +8,7 @@ import {
   EXACT_HEIGHT_PX,
   EXACT_WIDTH_PX,
 } from "@/lib/exact-template";
+import { WatermarkOverlay } from "./WatermarkOverlay";
 
 export const EXACT_PREVIEW_CSS = `
 @font-face {
@@ -28,6 +29,7 @@ export function ExactTemplatePreview({
   width = EXACT_WIDTH_PX,
   offsetY = 0,
   clipHeight,
+  watermark = false,
   onUnavailable,
   onHeight,
 }: {
@@ -38,6 +40,8 @@ export function ExactTemplatePreview({
   offsetY?: number;
   /** Clip box height (one A4 page). Defaults to the full natural height. */
   clipHeight?: number;
+  /** Overlay a tiled watermark for non-members (editor preview only). */
+  watermark?: boolean;
   onUnavailable?: () => void;
   onHeight?: (height: number) => void;
 }) {
@@ -169,6 +173,7 @@ export function ExactTemplatePreview({
           top: -offsetY,
         }}
       />
+      {watermark ? <WatermarkOverlay /> : null}
     </div>
   );
 }

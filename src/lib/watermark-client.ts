@@ -1,6 +1,6 @@
 export const WATERMARK_TEXT = "BlazeCV 免费版 · 开通会员去水印";
 
-function watermarkUrl(text: string): string {
+export function watermarkUrl(text: string = WATERMARK_TEXT): string {
   const escaped = text
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")

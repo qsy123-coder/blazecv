@@ -22,11 +22,11 @@ const EXTRA_CSS = `
 const CSS_LINK_ID = "__blazecv_export_css";
 const FONT_STYLE_ID = "__blazecv_export_font";
 
-/** The server is authoritative for the payment gate; notify the editor UI. */
-function noteWatermark(response: Response): void {
-  if (response.headers.get("X-Watermark") !== "1") return;
-  if (typeof window !== "undefined") {
-    window.dispatchEvent(new Event("blazecv:watermarked"));
+/** Thrown when the server refuses an export for a non-member (403). */
+export class MembershipRequiredError extends Error {
+  constructor() {
+    super("membership_required");
+    this.name = "MembershipRequiredError";
   }
 }
 
@@ -197,8 +197,10 @@ async function renderExactPng(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ doc }),
     });
+    if (res.status === 403) {
+      throw new MembershipRequiredError();
+    }
     if (res.ok) {
-      noteWatermark(res);
       onProgress?.("正在读取渲染结果…");
       const height = Number(res.headers.get("X-Page-Height") ?? 0);
       const blob = await res.blob();
@@ -211,7 +213,8 @@ async function renderExactPng(
         return { dataUrl, width: EXACT_WIDTH_PX, height: height || EXACT_HEIGHT_PX };
       }
     }
-  } catch {
+  } catch (error) {
+    if (error instanceof MembershipRequiredError) throw error;
     /* fall back to html-to-image below */
   }
 
@@ -430,14 +433,17 @@ export async function exportExactPdfText(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ doc }),
     });
+    if (res.status === 403) {
+      throw new MembershipRequiredError();
+    }
     if (res.ok) {
-      noteWatermark(res);
       onProgress?.("正在下载 PDF…");
       const blob = await res.blob();
       downloadBlob(blob, `${safeFileName(title)}-文字版-${todayStamp()}.pdf`);
       return true;
     }
-  } catch {
+  } catch (error) {
+    if (error instanceof MembershipRequiredError) throw error;
     /* fall through */
   }
   // Fallback: image PDF so the user still gets a file.

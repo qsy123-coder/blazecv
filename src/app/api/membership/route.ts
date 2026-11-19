@@ -1,5 +1,6 @@
 import { getCurrentUser } from "@/lib/server/auth";
 import { getMembershipStatus } from "@/lib/server/membership";
+import { payEnabled } from "@/lib/server/payments/provider";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -8,7 +9,7 @@ export async function GET() {
   const user = await getCurrentUser();
   const membership = await getMembershipStatus(user?.id);
   return Response.json(
-    { ...membership, loggedIn: Boolean(user) },
+    { ...membership, loggedIn: Boolean(user), payEnabled: payEnabled() },
     { headers: { "Cache-Control": "no-store" } },
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import type { ResumeDoc, TemplateId } from "@/lib/types";
 import { useResumeStore } from "@/store/useResumeStore";
 import {
@@ -20,6 +21,7 @@ import {
   exportExactPdfText,
   exportExactPng,
   exportExactWord,
+  MembershipRequiredError,
 } from "@/lib/exact-export";
 import { downloadText, readFileAsText, safeFileName, todayStamp } from "@/lib/utils";
 import { useMembership } from "@/lib/use-membership";
@@ -45,6 +47,7 @@ export default function AppShell() {
   const membership = useMembership();
 
   const [templatesOpen, setTemplatesOpen] = useState(false);
+  const [membershipPromptOpen, setMembershipPromptOpen] = useState(false);
   const [remoteConflict, setRemoteConflict] = useState(false);
   const [exportProgress, setExportProgress] = useState<{
     label: string;
@@ -205,6 +208,14 @@ export default function AppShell() {
     );
   }
 
+  // Members-only export gate. Returns false (and opens the membership prompt)
+  // when payments are enabled and the current user is not an active member.
+  const ensureMemberForExport = (): boolean => {
+    if (!membership.payEnabled || membership.active) return true;
+    setMembershipPromptOpen(true);
+    return false;
+  };
+
   const runExport = async (
     label: string,
     task: (onProgress: (detail: string) => void) => Promise<boolean>,
@@ -217,12 +228,21 @@ export default function AppShell() {
           current ? { ...current, detail } : { label, detail, startedAt },
         ),
       );
+    } catch (error) {
+      // Server-side backstop: membership may have expired between page load and
+      // export. Surface the same prompt instead of falling back to a local render.
+      if (error instanceof MembershipRequiredError) {
+        setMembershipPromptOpen(true);
+        return false;
+      }
+      throw error;
     } finally {
       setExportProgress(null);
     }
   };
 
   const handleExportPdf = async () => {
+    if (!ensureMemberForExport()) return;
     if (getExactTemplateToken(doc)) {
       const ok = await runExport("导出 PDF（图片版）", (onProgress) =>
         exportExactPdf(doc, doc.title, onProgress),
@@ -241,6 +261,7 @@ export default function AppShell() {
   };
 
   const handleExportPdfText = async () => {
+    if (!ensureMemberForExport()) return;
     if (getExactTemplateToken(doc)) {
       const ok = await runExport("导出 PDF（文字版）", (onProgress) =>
         exportExactPdfText(doc, doc.title, onProgress),
@@ -253,6 +274,7 @@ export default function AppShell() {
   };
 
   const handleExportPng = async () => {
+    if (!ensureMemberForExport()) return;
     if (getExactTemplateToken(doc)) {
       const ok = await runExport("导出 PNG 图片", (onProgress) =>
         exportExactPng(doc, doc.title, "", onProgress),
@@ -281,6 +303,7 @@ export default function AppShell() {
   };
 
   const handleExportWord = async () => {
+    if (!ensureMemberForExport()) return;
     try {
       if (getExactTemplateToken(doc)) {
         const ok = await runExport("导出 Word（图片版）", (onProgress) =>
@@ -297,6 +320,7 @@ export default function AppShell() {
   };
 
   const handleExportWordText = async () => {
+    if (!ensureMemberForExport()) return;
     try {
       await exportWord(doc, { watermark: !membership.active });
     } catch (error) {
@@ -429,6 +453,38 @@ export default function AppShell() {
       />
 
       {exportProgress ? <ExportProgressOverlay state={exportProgress} /> : null}
+
+      {membershipPromptOpen ? (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/30 p-4 backdrop-blur-[1px]"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="w-full max-w-[360px] rounded-xl border border-slate-200 bg-white p-5 shadow-2xl">
+            <div className="text-[14px] font-semibold text-slate-800">
+              导出需要会员
+            </div>
+            <p className="mt-2 text-[12px] leading-5 text-slate-600">
+              简历导出（PDF / 图片 / Word）为会员功能。开通会员后即可无水印导出全部格式。
+            </p>
+            <div className="mt-4 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setMembershipPromptOpen(false)}
+                className="rounded-md px-3 py-1.5 text-[12px] text-slate-500 transition hover:bg-slate-50 hover:text-slate-700"
+              >
+                取消
+              </button>
+              <Link
+                href="/membership"
+                className="rounded-md bg-slate-900 px-3 py-1.5 text-[12px] font-medium text-white transition hover:bg-slate-700"
+              >
+                开通会员
+              </Link>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </>
   );
 }

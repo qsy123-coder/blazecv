@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "BlazeCV · 在线简历制作与简历模板库",
     short_name: "BlazeCV",
     description:
-      "4127 套简历模板，在线填写、A4 实时预览；免费编辑与带水印导出，会员无水印导出 PDF / PNG / Word。",
+      "4127 套简历模板，在线填写、A4 实时预览；免费编辑与预览，导出 PDF / PNG / Word 为会员功能。",
     start_url: "/",
     display: "standalone",
     background_color: "#ffffff",

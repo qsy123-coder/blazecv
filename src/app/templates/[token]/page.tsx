@@ -75,7 +75,7 @@ export async function generateMetadata({
   const base = (entry.desc || sourceName).replace(/[。；;\s]+$/, "");
   const description = `${base}。${entry.tags
     .slice(0, 6)
-    .join("、")}；支持在线编辑、A4 实时预览；免费版带水印导出，会员无水印导出 PDF、PNG、Word。`;
+    .join("、")}；支持在线编辑、A4 实时预览；导出 PDF、PNG、Word 为会员功能。`;
   return {
     title,
     description,
@@ -238,7 +238,7 @@ export default async function TemplateDetailPage({
 
             <ul className="mt-6 space-y-2 border-t border-slate-200 pt-4 text-[12px] leading-5 text-slate-500">
               <li>· 原站模板 DOM/CSS 1:1 渲染，A4 实时预览</li>
-              <li>· 内容实时绑定，免费带水印导出；会员无水印导出 PDF / PNG / Word</li>
+              <li>· 内容实时绑定，免费编辑与预览；导出 PDF / PNG / Word 为会员功能</li>
               <li>· 数据仅保存在本机浏览器，无需注册</li>
             </ul>
             {entry.people > 0 ? (

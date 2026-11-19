@@ -148,7 +148,7 @@ export function MembershipCenter() {
               BlazeCV 会员
             </h1>
             <p className="mt-2 text-[13px] text-slate-500">
-              编辑、预览与带水印导出免费；会员导出无水印，适合直接投递。
+              编辑与预览免费（预览带水印）；导出 PDF / PNG / Word 为会员功能，适合直接投递。
             </p>
           </div>
           {plans?.provider === "mock" ? (
@@ -188,8 +188,8 @@ export function MembershipCenter() {
                 </p>
                 <p className="mt-0.5 text-[12px] text-slate-500">
                   {membership.loggedIn
-                    ? "导出会带水印；开通会员后立即去除。"
-                    : "免费版可以编辑、预览并带水印导出；开通会员需要登录。"}
+                    ? "导出为会员功能；开通后即可导出。"
+                    : "免费版可以编辑与预览（预览带水印）；导出需要登录并开通会员。"}
                 </p>
               </div>
               {justPaid ? (

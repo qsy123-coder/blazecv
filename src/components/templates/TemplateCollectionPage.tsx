@@ -112,7 +112,7 @@ export function TemplateCollectionPage({
           </h1>
           <p className="mt-3 text-[13px] leading-6 text-slate-600">{summary}</p>
           <p className="mt-2 text-[11px] text-slate-400">
-            共 {total} 套 · 按模板库使用人数排序 · 支持在线编辑、A4 实时预览；免费版带水印导出，会员无水印导出 PDF / PNG / Word
+            共 {total} 套 · 按模板库使用人数排序 · 支持在线编辑、A4 实时预览；导出 PDF / PNG / Word 为会员功能
           </p>
         </header>
 

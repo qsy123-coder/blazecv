@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
@@ -95,15 +95,8 @@ export function Toolbar({
   const futureLength = useResumeStore((state) => state.future.length);
   const importRef = useRef<HTMLInputElement>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [watermarkNotice, setWatermarkNotice] = useState(false);
   const membership = useMembership();
   const router = useRouter();
-
-  useEffect(() => {
-    const onWatermarked = () => setWatermarkNotice(true);
-    window.addEventListener("blazecv:watermarked", onWatermarked);
-    return () => window.removeEventListener("blazecv:watermarked", onWatermarked);
-  }, []);
 
   // Arrow = 浏览器意义上的「返回上一页」；没有站内/历史可退时才回首页。
   // Logo = 明确的「回首页」，两者不再混用同一个目标。
@@ -213,11 +206,13 @@ export function Toolbar({
 
         <Menu label="导出" icon="download">
           <div className="mb-1 rounded px-2.5 py-1.5 text-[10px] leading-relaxed text-slate-400">
-            {membership.active ? (
+            {!membership.payEnabled ? (
+              "导出"
+            ) : membership.active ? (
               "会员导出 · 无水印"
             ) : (
               <>
-                免费版导出带水印 ·{" "}
+                导出为会员功能 ·{" "}
                 <Link
                   href="/membership"
                   className="font-medium text-slate-900 underline underline-offset-2"
@@ -278,35 +273,6 @@ export function Toolbar({
         />
       </div>
       </header>
-
-      {watermarkNotice ? (
-        <div className="fixed bottom-5 right-5 z-[70] w-[280px] rounded-lg border border-slate-200 bg-white p-3 shadow-xl">
-          <div className="flex items-start gap-2">
-            <Icon name="alert" size={16} className="mt-0.5 shrink-0 text-amber-500" />
-            <div className="text-[12px] text-slate-600">
-              <p className="font-medium text-slate-800">本次导出带水印</p>
-              <p className="mt-0.5 leading-relaxed">
-                免费版导出会添加水印；开通会员后同一份简历可无水印导出。
-              </p>
-              <div className="mt-2 flex items-center gap-3">
-                <Link
-                  href="/membership"
-                  className="font-medium text-slate-900 underline underline-offset-2"
-                >
-                  开通会员
-                </Link>
-                <button
-                  type="button"
-                  className="text-slate-400 transition hover:text-slate-600"
-                  onClick={() => setWatermarkNotice(false)}
-                >
-                  知道了
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : null}
 
       <VersionHistory
         open={historyOpen}

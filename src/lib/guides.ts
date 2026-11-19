@@ -1060,7 +1060,7 @@ export const GUIDES: Guide[] = [
       },
       {
         type: "p",
-        text: "BlazeCV 免费版可以带水印导出，会员无水印导出 PDF、PNG 和 Word。正式投递前建议用 PDF 预览逐页检查。",
+        text: "BlazeCV 免费版可在线编辑与预览，导出 PDF、PNG 和 Word 为会员功能。正式投递前建议用 PDF 预览逐页检查。",
       },
 
       { type: "h2", text: "邮件投递" },

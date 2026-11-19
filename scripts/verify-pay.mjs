@@ -281,76 +281,76 @@ if (DISABLED_MODE) {
   );
 
   const doc = await sampleDoc();
+
   const anonymousExport = await raw("/api/export-image", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ doc }),
   });
+  check(
+    "匿名导出被拒绝（403 仅会员）",
+    anonymousExport.status === 403,
+    `status=${anonymousExport.status}`,
+  );
 
-  if (anonymousExport.status === 503) {
-    skip("匿名导出带水印", "未连接无头浏览器（EXPORT_CDP_URL）");
+  const nonMemberExport = await raw("/api/export-image", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Cookie: cookieB },
+    body: JSON.stringify({ doc }),
+  });
+  check(
+    "未付费登录用户导出被拒绝（403）",
+    nonMemberExport.status === 403,
+    `status=${nonMemberExport.status}`,
+  );
+
+  const anonymousPdf = await raw("/api/export-pdf", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ doc }),
+  });
+  check(
+    "匿名文字版 PDF 被拒绝（403）",
+    anonymousPdf.status === 403,
+    `status=${anonymousPdf.status}`,
+  );
+
+  const memberExport = await raw("/api/export-image", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Cookie: cookieA },
+    body: JSON.stringify({ doc }),
+  });
+  if (memberExport.status === 503) {
+    skip("会员导出无水印", "未连接无头浏览器（EXPORT_CDP_URL）");
   } else {
-    const anonymousBuffer = await anonymousExport.arrayBuffer();
-    const anonymousSize = pngSize(anonymousBuffer);
-    check(
-      "匿名导出带水印且尺寸为单页 A4",
-      anonymousExport.ok &&
-        anonymousExport.headers.get("X-Watermark") === "1" &&
-        anonymousSize.width === 1588,
-      `status=${anonymousExport.status}, X-Watermark=${anonymousExport.headers.get("X-Watermark")}, size=${anonymousSize.width}x${anonymousSize.height}`,
-    );
-
-    const memberExport = await raw("/api/export-image", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Cookie: cookieA },
-      body: JSON.stringify({ doc }),
-    });
     const memberBuffer = await memberExport.arrayBuffer();
     const memberSize = pngSize(memberBuffer);
     check(
-      "会员导出无水印且尺寸一致",
+      "会员导出无水印且为单页 A4",
       memberExport.ok &&
         memberExport.headers.get("X-Watermark") === "0" &&
-        memberSize.width === anonymousSize.width &&
-        memberSize.height === anonymousSize.height,
+        memberSize.width === 1588,
       `status=${memberExport.status}, X-Watermark=${memberExport.headers.get("X-Watermark")}, size=${memberSize.width}x${memberSize.height}`,
     );
+  }
 
-    const identical =
-      memberBuffer.byteLength === anonymousBuffer.byteLength &&
-      Buffer.from(memberBuffer).equals(Buffer.from(anonymousBuffer));
+  const memberPdf = await raw("/api/export-pdf", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Cookie: cookieA },
+    body: JSON.stringify({ doc }),
+  });
+  if (memberPdf.status === 503) {
+    skip("会员文字版 PDF 无水印", "未连接无头浏览器（EXPORT_CDP_URL）");
+  } else {
+    const memberPdfBytes = await memberPdf.arrayBuffer();
+    const memberPdfDoc = await PDFDocument.load(memberPdfBytes);
     check(
-      "匿名与会员导出像素确实不同（水印生效）",
-      !identical,
-      `identical=${identical}`,
+      "会员文字版 PDF 无水印",
+      memberPdf.ok &&
+        memberPdf.headers.get("X-Watermark") === "0" &&
+        memberPdfDoc.getPageCount() >= 1,
+      `status=${memberPdf.status}, X-Watermark=${memberPdf.headers.get("X-Watermark")}, pages=${memberPdfDoc.getPageCount()}`,
     );
-
-    const anonymousPdf = await raw("/api/export-pdf", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ doc }),
-    });
-    const memberPdf = await raw("/api/export-pdf", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Cookie: cookieA },
-      body: JSON.stringify({ doc }),
-    });
-    if (anonymousPdf.ok && memberPdf.ok) {
-      const anonymousPdfBytes = await anonymousPdf.arrayBuffer();
-      const memberPdfBytes = await memberPdf.arrayBuffer();
-      const anonymousPdfDoc = await PDFDocument.load(anonymousPdfBytes);
-      const memberPdfDoc = await PDFDocument.load(memberPdfBytes);
-      check(
-        "文字版 PDF 水印与页数一致",
-        anonymousPdf.headers.get("X-Watermark") === "1" &&
-          memberPdf.headers.get("X-Watermark") === "0" &&
-          anonymousPdfDoc.getPageCount() === memberPdfDoc.getPageCount() &&
-          !Buffer.from(memberPdfBytes).equals(Buffer.from(anonymousPdfBytes)),
-        `pages=${anonymousPdfDoc.getPageCount()}/${memberPdfDoc.getPageCount()}, headers=${anonymousPdf.headers.get("X-Watermark")}/${memberPdf.headers.get("X-Watermark")}`,
-      );
-    } else {
-      skip("文字版 PDF 水印与页数一致", `status=${anonymousPdf.status}/${memberPdf.status}`);
-    }
   }
 
   finish();

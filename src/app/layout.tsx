@@ -4,7 +4,7 @@ import "./globals.css";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://aetouban.cn";
 const SITE_NAME = "BlazeCV";
 const SITE_DESC =
-  "BlazeCV 在线简历制作：4127 套简历模板，A4 实时预览；免费编辑与带水印导出，会员无水印导出 PDF、PNG、Word。数据默认保存在本机，无需注册即可编辑。";
+  "BlazeCV 在线简历制作：4127 套简历模板，A4 实时预览；免费编辑与预览，导出 PDF、PNG、Word 为会员功能。数据默认保存在本机，无需注册即可编辑。";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

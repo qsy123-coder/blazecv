@@ -1,6 +1,5 @@
 ﻿import { NextResponse } from "next/server";
-import { exportWatermarkRequired } from "@/lib/server/membership";
-import { injectWatermark } from "@/lib/server/payments/watermark";
+import { exportGate } from "@/lib/server/membership";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -66,6 +65,12 @@ export async function POST(request: Request) {
   const doc = body.doc;
   if (!doc || typeof doc !== "object") {
     return NextResponse.json({ error: "missing doc" }, { status: 400 });
+  }
+
+  // Members-only gate: fail fast before acquiring a browser.
+  const gate = await exportGate();
+  if (!gate.allowed) {
+    return NextResponse.json({ error: "membership_required" }, { status: 403 });
   }
 
   const acquired = await getBrowser();
@@ -200,10 +205,6 @@ export async function POST(request: Request) {
       );
     });
     await new Promise((r) => setTimeout(r, 150));
-    // Payment gate: anonymous/expired members get a visible watermark. The
-    // overlay is absolute, so page height and A4 slicing are unchanged.
-    const watermark = await exportWatermarkRequired();
-    if (watermark) await injectWatermark(page);
     const frame = await page.$(IFRAME_SELECTOR);
     if (!frame) {
       return NextResponse.json({ error: "no iframe" }, { status: 500 });
@@ -214,7 +215,7 @@ export async function POST(request: Request) {
       headers: {
         "Content-Type": "image/png",
         "X-Page-Height": String(height || 0),
-        "X-Watermark": watermark ? "1" : "0",
+        "X-Watermark": "0",
         "Cache-Control": "no-store",
       },
     });

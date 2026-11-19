@@ -48,7 +48,7 @@ export async function generateMetadata({
   const { tag, count } = data;
   const meta = tagMeta(tag, count);
   const title = `${tag}简历模板 · ${count} 套免费在线模板`;
-  const description = `${meta.summary} 共 ${count} 套，支持在线编辑、A4 实时预览；免费版带水印导出，会员无水印导出 PDF、PNG、Word。`;
+  const description = `${meta.summary} 共 ${count} 套，支持在线编辑、A4 实时预览；导出 PDF、PNG、Word 为会员功能。`;
   const canonical = `${SITE_URL}/templates/tag/${encodeURIComponent(tag)}`;
 
   return {
