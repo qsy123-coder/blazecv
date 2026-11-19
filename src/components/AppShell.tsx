@@ -7,9 +7,11 @@ import { useResumeStore } from "@/store/useResumeStore";
 import {
   loadActiveResume,
   loadResumeById,
+  migrateLegacySampleData,
   saveResume,
   setActiveResume,
 } from "@/lib/storage";
+import { scrubLegacyDoc } from "@/lib/legacy-identity";
 import { createBlankResume, createSampleResume } from "@/lib/sample";
 import { getDocTemplate, resolveTokens, TEMPLATE_IDS } from "@/lib/templates";
 import { parseResumeObject, parseResumeJson } from "@/lib/schema";
@@ -69,11 +71,21 @@ export default function AppShell() {
             : null;
         const requestedId = params.get("id");
 
+        // Resumes saved before the template sample-data scrub still carry the
+        // original sample identity; clean them the moment they are loaded, so
+        // an existing ?id= link shows clean data before the background sweep.
+        await migrateLegacySampleData().catch(() => undefined);
+
         const byId = requestedId ? await loadResumeById(requestedId) : null;
         const existing = byId ?? (await loadActiveResume());
         if (existing) {
           const parsed = parseResumeObject(existing);
           if (parsed.ok) {
+            const scrubbed = scrubLegacyDoc(parsed.doc);
+            if (scrubbed.changed) {
+              scrubbed.doc.updatedAt = Date.now();
+              parsed.doc = scrubbed.doc;
+            }
             if (requestedId && requestedId === parsed.doc.id) {
               void setActiveResume(parsed.doc.id).catch(() => undefined);
             }
@@ -84,6 +96,9 @@ export default function AppShell() {
               void saveResume(parsed.doc).catch(() => undefined);
             } else {
               hydrate(parsed.doc);
+              if (scrubbed.changed) {
+                void saveResume(parsed.doc).catch(() => undefined);
+              }
             }
           } else {
             const doc = createSampleResume(requested ?? "minimal");

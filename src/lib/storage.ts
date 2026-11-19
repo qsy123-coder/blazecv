@@ -2,6 +2,7 @@ import type { Table } from "dexie";
 import type { ResumeDoc } from "./types";
 import { getTemplate } from "./templates";
 import { uid } from "./utils";
+import { scrubLegacyDoc } from "./legacy-identity";
 
 export interface ResumeRecord {
   id: string;
@@ -46,6 +47,7 @@ interface BlazeDB {
 }
 
 const ACTIVE_KEY = "active-resume";
+const LEGACY_SCRUB_KEY = "legacy-scrub-v1";
 const VERSION_INTERVAL_MS = 10 * 60 * 1000;
 const VERSION_LIMIT = 20;
 
@@ -236,4 +238,52 @@ export async function putCachedThumb(
 export async function deleteVersion(id: number): Promise<void> {
   const db = await getDb();
   await db.versions.delete(id);
+}
+
+/**
+ * One-time migration of resumes saved before the template sample-data scrub.
+ *
+ * Records created earlier carry the original sample identity (陈媛媛Abbey,
+ * abbey@wondercv.com, 超级公司, an external OSS avatar …). The templates were
+ * cleaned, but a saved doc keeps its own content, so those resumes still render
+ * the old data. Rewrite every stored doc/version once and drop the bound-thumb
+ * cache so cards re-render from clean data.
+ *
+ * Idempotent: guarded by a settings flag, and a no-op when nothing matches.
+ */
+export async function migrateLegacySampleData(): Promise<number> {
+  const db = await getDb();
+  const done = await db.settings.get(LEGACY_SCRUB_KEY);
+  if (done?.value === "1") return 0;
+
+  let rewritten = 0;
+
+  const records = await db.resumes.toArray();
+  for (const record of records) {
+    const { doc, changed } = scrubLegacyDoc(record.doc);
+    if (!changed) continue;
+    doc.updatedAt = Date.now();
+    await db.resumes.put({
+      id: doc.id,
+      title: doc.title,
+      updatedAt: doc.updatedAt,
+      doc,
+    });
+    rewritten += 1;
+  }
+
+  const versions = await db.versions.toArray();
+  for (const version of versions) {
+    const { doc, changed } = scrubLegacyDoc(version.doc);
+    if (!changed) continue;
+    await db.versions.put({
+      ...version,
+      title: doc.title,
+      doc,
+    });
+  }
+
+  if (rewritten > 0) await db.thumbs.clear();
+  await db.settings.put({ key: LEGACY_SCRUB_KEY, value: "1" });
+  return rewritten;
 }

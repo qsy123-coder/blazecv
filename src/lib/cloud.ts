@@ -1,4 +1,5 @@
 import type { ResumeDoc } from "./types";
+import { scrubLegacyDoc } from "./legacy-identity";
 
 export interface CloudUser {
   id: string;
@@ -111,7 +112,14 @@ export const cloudApi = {
       { method: "POST" },
     ),
   logout: () => request<{ ok: boolean }>("/api/auth/logout", { method: "POST" }),
-  pull: () => request<{ resume: CloudResume | null }>("/api/resume"),
+  pull: async () => {
+    const result = await request<{ resume: CloudResume | null }>("/api/resume");
+    if (result.resume?.doc) {
+      const { doc, changed } = scrubLegacyDoc(result.resume.doc);
+      if (changed) result.resume.doc = doc;
+    }
+    return result;
+  },
   push: (doc: ResumeDoc) =>
     request<{ ok: boolean; id: string; updatedAt: string }>(
       `/api/resumes/${encodeURIComponent(doc.id)}`,
@@ -122,10 +130,19 @@ export const cloudApi = {
     ),
   listResumes: () =>
     request<{ resumes: CloudResumeSummary[] }>("/api/resumes"),
-  getResume: (id: string) =>
-    request<{
+  getResume: async (id: string) => {
+    const result = await request<{
       resume: { id: string; doc: ResumeDoc; title: string; updatedAt: string };
-    }>(`/api/resumes/${encodeURIComponent(id)}`),
+    }>(`/api/resumes/${encodeURIComponent(id)}`);
+    // A resume cloud-saved before the template scrub still carries the sample
+    // identity; clean it on the way in so the editor never renders it.
+    const { doc, changed } = scrubLegacyDoc(result.resume.doc);
+    if (changed) {
+      result.resume.doc = doc;
+      result.resume.title = doc.title;
+    }
+    return result;
+  },
   deleteResume: (id: string) =>
     request<{ ok: boolean }>(`/api/resumes/${encodeURIComponent(id)}`, {
       method: "DELETE",
