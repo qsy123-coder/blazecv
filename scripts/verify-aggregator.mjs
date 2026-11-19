@@ -131,7 +131,17 @@ function handleStub(request, response) {
   });
   request.on("end", () => {
     const url = new URL(request.url ?? "/", `http://127.0.0.1:${STUB_PORT}`);
-    const form = parseForm(raw);
+    const contentType = String(request.headers["content-type"] ?? "");
+    let form;
+    if (contentType.includes("json") || raw.trim().startsWith("{")) {
+      try {
+        form = JSON.parse(raw);
+      } catch {
+        form = {};
+      }
+    } else {
+      form = parseForm(raw);
+    }
     const entry = { method: request.method, path: url.pathname, query: url.search, form, raw };
     requests.push(entry);
 

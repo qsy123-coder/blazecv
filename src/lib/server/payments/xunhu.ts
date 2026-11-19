@@ -158,11 +158,11 @@ async function postForm(
   url: string,
   params: Record<string, string>,
 ): Promise<XunhuResponse> {
-  const body = new URLSearchParams(params);
+  // 官方最新示例使用 JSON 提交；支付类型由 APPID 绑定的渠道决定。
   const response = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: body.toString(),
+    headers: { "Content-Type": "application/json;charset=UTF-8" },
+    body: JSON.stringify(params),
     signal: AbortSignal.timeout(15_000),
   });
   const text = await response.text();
@@ -204,9 +204,6 @@ export class XunhuProvider implements PayProvider {
       time: String(Math.floor(Date.now() / 1000)),
       notify_url: xunhuNotifyUrl(),
       nonce_str: nonce(),
-      type: input.channel === "alipay" ? config.alipayType : config.wechatType,
-      wap_url: config.wapUrl,
-      wap_name: config.wapName,
     };
     const returnUrl = xunhuReturnUrl();
     if (returnUrl) params.return_url = returnUrl;
@@ -218,13 +215,15 @@ export class XunhuProvider implements PayProvider {
     }
     verifyResponseHash(data, config.secret);
 
+    // url 是支付页地址，url_qrcode 是二维码图片地址。默认用支付页作为
+    // 二维码内容；把图片地址再编码成二维码会扫出图片而不是收银台。
     const field = env("XUNHU_QR_FIELD").toLowerCase();
     const codeUrl =
-      field === "url"
-        ? data.url
-        : field === "url_qrcode"
-          ? data.url_qrcode
-          : data.url_qrcode || data.url;
+      field === "url_qrcode"
+        ? data.url_qrcode
+        : field === "url"
+          ? data.url
+          : data.url || data.url_qrcode;
     if (!codeUrl) throw new XunhuApiError(502, "MISSING_CODE_URL");
     return { codeUrl };
   }
