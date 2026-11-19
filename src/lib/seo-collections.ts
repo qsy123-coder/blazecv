@@ -482,7 +482,7 @@ export function tagMeta(tag: string, count: number) {
   const copy = TAG_COPY[tag];
   const summary =
     copy?.summary ??
-    `${tag}方向的简历模板，共收录 ${count} 套，覆盖不同版式与经验阶段。所有模板都支持在线编辑、A4 实时预览并导出 PDF、PNG 与 Word。`;
+    `${tag}方向的简历模板，共收录 ${count} 套，覆盖不同版式与经验阶段。所有模板都支持在线编辑、A4 实时预览；免费版带水印导出，会员无水印导出 PDF、PNG 与 Word。`;
   return {
     summary,
     tips:
@@ -501,7 +501,7 @@ export function layoutMeta(layout: string, count: number) {
     label,
     summary:
       copy?.summary ??
-      `${label}版式简历模板，共收录 ${count} 套，均支持在线编辑、A4 实时预览与 PDF、PNG、Word 导出。`,
+      `${label}版式简历模板，共收录 ${count} 套，均支持在线编辑、A4 实时预览；免费版带水印导出，会员无水印导出 PDF、PNG、Word。`,
     tips:
       copy?.tips ?? [
         "按目标岗位调整模块顺序，把最相关的内容放在前面。",

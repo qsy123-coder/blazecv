@@ -7,9 +7,20 @@ const CONTENT_WIDTH_TWIP = 9026;
 const GREY = "6B7280";
 const INK = "1F2937";
 
-export async function exportWord(doc: ResumeDoc): Promise<void> {
-  const { AlignmentType, BorderStyle, Document, Packer, Paragraph, TabStopType, TextRun } =
-    await import("docx");
+export async function exportWord(
+  doc: ResumeDoc,
+  options?: { watermark?: boolean },
+): Promise<void> {
+  const {
+    AlignmentType,
+    BorderStyle,
+    Document,
+    Footer,
+    Packer,
+    Paragraph,
+    TabStopType,
+    TextRun,
+  } = await import("docx");
 
   const primary = (doc.theme.primary?.trim() || getDocTemplate(doc).base.primary)
     .replace("#", "")
@@ -177,6 +188,26 @@ export async function exportWord(doc: ResumeDoc): Promise<void> {
         properties: {
           page: { margin: { top: 900, right: 1000, bottom: 900, left: 1000 } },
         },
+        ...(options?.watermark
+          ? {
+              footers: {
+                default: new Footer({
+                  children: [
+                    new Paragraph({
+                      alignment: AlignmentType.CENTER,
+                      children: [
+                        new TextRun({
+                          text: "BlazeCV 免费版 · 开通会员去水印",
+                          size: 16,
+                          color: GREY,
+                        }),
+                      ],
+                    }),
+                  ],
+                }),
+              },
+            }
+          : {}),
         children,
       },
     ],

@@ -416,8 +416,8 @@ export function HomePage() {
               你的价值
             </h1>
             <p className="mt-5 max-w-xl text-[15px] leading-8 text-slate-500">
-              选一套模板，填完内容，导出 PDF。实时 A4 预览、内容检查、自动保存，
-              简历只留在你的浏览器。
+              选一套模板，填完内容，导出 PDF。实时 A4 预览、内容检查、自动保存；
+              免费版带水印，会员无水印，简历只留在你的浏览器。
             </p>
 
             <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -506,7 +506,7 @@ export function HomePage() {
             >
               浏览全部模板库 →
             </Link>
-            <div className="text-[11px] text-slate-400">数据保存在本机 · 无需注册</div>
+            <div className="text-[11px] text-slate-400">数据保存在本机 · 编辑无需注册</div>
           </div>
         </div>
 
@@ -665,7 +665,7 @@ export function HomePage() {
               {
                 icon: "download" as const,
                 title: "PDF / PNG / Word",
-                desc: "打印级 PDF、2x 图片与可编辑 Word，一份内容多种交付。",
+                desc: "打印级 PDF、2x 图片与可编辑 Word；免费版带水印，会员导出无水印。",
               },
             ].map((feature) => (
               <div

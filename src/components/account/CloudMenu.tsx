@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { createPortal } from "react-dom";
 import {
   cloudApi,
@@ -74,6 +75,10 @@ export function CloudMenu() {
   const overflowPx = useResumeStore((state) => state.overflowPx);
   const reset = useResumeStore((state) => state.reset);
 
+  const announceMembership = () => {
+    window.dispatchEvent(new Event("blazecv:membership-changed"));
+  };
+
   const [user, setUser] = useState<CloudUser | null>(null);
   const [checked, setChecked] = useState(false);
   const [open, setOpen] = useState(false);
@@ -125,6 +130,17 @@ export function CloudMenu() {
   useEffect(() => {
     setOrigin(window.location.origin);
     setMounted(true);
+  }, []);
+
+  // 会员页/导出提示通过事件打开登录面板，CloudMenu 本身不必知道调用方。
+  useEffect(() => {
+    const openLogin = () => {
+      setOpen(true);
+      setError(null);
+      setMessage(null);
+    };
+    window.addEventListener("blazecv:open-login", openLogin);
+    return () => window.removeEventListener("blazecv:open-login", openLogin);
   }, []);
 
   useEffect(() => {
@@ -276,6 +292,7 @@ export function CloudMenu() {
       try {
         const result = await cloudApi.loginWithCode(value, code);
         setUser(result.user);
+        announceMembership();
         setCode("");
         setMessage("已登录");
       } catch (caught) {
@@ -311,6 +328,7 @@ export function CloudMenu() {
           ? await cloudApi.login(value, password)
           : await cloudApi.register(value, password);
       setUser(result.user);
+      announceMembership();
       setPassword("");
       setMessage(mode === "login" ? "已登录" : "账号已创建，自动登录");
     } catch (caught) {
@@ -556,6 +574,7 @@ export function CloudMenu() {
     try {
       await cloudApi.logout();
       setUser(null);
+      announceMembership();
       setShare(null);
       setShareMessage(null);
       setSessions([]);
@@ -671,6 +690,15 @@ export function CloudMenu() {
                       {user.email ?? user.phone ?? ""}
                     </span>
                   </div>
+
+                  <Link
+                    href="/membership"
+                    onClick={() => setOpen(false)}
+                    className="flex items-center justify-between rounded-md border border-slate-200 px-3 py-2 text-[12px] text-slate-600 transition hover:bg-slate-50"
+                  >
+                    <span>会员中心</span>
+                    <Icon name="arrowRight" size={14} className="text-slate-400" />
+                  </Link>
 
                   {doc ? (
                     <div className="flex gap-2">

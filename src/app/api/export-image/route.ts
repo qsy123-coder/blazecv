@@ -1,4 +1,6 @@
 ﻿import { NextResponse } from "next/server";
+import { exportWatermarkRequired } from "@/lib/server/membership";
+import { injectWatermark } from "@/lib/server/payments/watermark";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -198,6 +200,10 @@ export async function POST(request: Request) {
       );
     });
     await new Promise((r) => setTimeout(r, 150));
+    // Payment gate: anonymous/expired members get a visible watermark. The
+    // overlay is absolute, so page height and A4 slicing are unchanged.
+    const watermark = await exportWatermarkRequired();
+    if (watermark) await injectWatermark(page);
     const frame = await page.$(IFRAME_SELECTOR);
     if (!frame) {
       return NextResponse.json({ error: "no iframe" }, { status: 500 });
@@ -208,6 +214,7 @@ export async function POST(request: Request) {
       headers: {
         "Content-Type": "image/png",
         "X-Page-Height": String(height || 0),
+        "X-Watermark": watermark ? "1" : "0",
         "Cache-Control": "no-store",
       },
     });

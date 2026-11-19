@@ -50,7 +50,7 @@ export async function generateMetadata({
   const { layout, count } = data;
   const meta = layoutMeta(layout, count);
   const title = `${meta.label}简历模板 · ${count} 套免费在线模板`;
-  const description = `${meta.summary} 共 ${count} 套，支持在线编辑、A4 实时预览，免费导出 PDF、PNG、Word。`;
+  const description = `${meta.summary} 共 ${count} 套，支持在线编辑、A4 实时预览；免费版带水印导出，会员无水印导出 PDF、PNG、Word。`;
   const canonical = `${SITE_URL}/templates/layout/${encodeURIComponent(layout)}`;
 
   return {

@@ -75,7 +75,7 @@ export async function generateMetadata({
   const base = (entry.desc || sourceName).replace(/[。；;\s]+$/, "");
   const description = `${base}。${entry.tags
     .slice(0, 6)
-    .join("、")}；支持在线编辑、A4 实时预览，免费导出 PDF、PNG、Word。`;
+    .join("、")}；支持在线编辑、A4 实时预览；免费版带水印导出，会员无水印导出 PDF、PNG、Word。`;
   return {
     title,
     description,
@@ -238,7 +238,7 @@ export default async function TemplateDetailPage({
 
             <ul className="mt-6 space-y-2 border-t border-slate-200 pt-4 text-[12px] leading-5 text-slate-500">
               <li>· 原站模板 DOM/CSS 1:1 渲染，A4 实时预览</li>
-              <li>· 内容实时绑定，免费导出 PDF / PNG / Word</li>
+              <li>· 内容实时绑定，免费带水印导出；会员无水印导出 PDF / PNG / Word</li>
               <li>· 数据仅保存在本机浏览器，无需注册</li>
             </ul>
             {entry.people > 0 ? (
@@ -305,7 +305,7 @@ export default async function TemplateDetailPage({
             </p>
             <p>
               在 BlazeCV 中打开模板后，左侧填写内容即可在右侧看到 A4 实时预览；
-              支持一键导出 PDF、PNG 和 Word，所有内容默认只保存在你的浏览器中。
+              支持导出 PDF、PNG 和 Word；免费版文件带水印，会员导出无水印。所有内容默认只保存在你的浏览器中。
               你也可以返回
               <Link
                 href="/templates"

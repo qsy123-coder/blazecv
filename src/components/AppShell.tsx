@@ -22,6 +22,8 @@ import {
   exportExactWord,
 } from "@/lib/exact-export";
 import { downloadText, readFileAsText, safeFileName, todayStamp } from "@/lib/utils";
+import { useMembership } from "@/lib/use-membership";
+import { ensurePrintWatermark } from "@/lib/watermark-client";
 import { Toolbar } from "@/components/Toolbar";
 import { EditorSplit } from "@/components/editor/EditorSplit";
 import { TemplateModal } from "@/components/TemplateModal";
@@ -40,6 +42,7 @@ export default function AppShell() {
   const redo = useResumeStore((state) => state.redo);
   const setSaveState = useResumeStore((state) => state.setSaveState);
   const setStorageError = useResumeStore((state) => state.setStorageError);
+  const membership = useMembership();
 
   const [templatesOpen, setTemplatesOpen] = useState(false);
   const [remoteConflict, setRemoteConflict] = useState(false);
@@ -228,7 +231,13 @@ export default function AppShell() {
       window.alert("原站模板 PDF 生成失败，请改用 PNG 或稍后重试。");
       return;
     }
-    window.print();
+    // Classic templates print from the live DOM; the server gate cannot help.
+    const cleanup = membership.active ? null : ensurePrintWatermark();
+    try {
+      window.print();
+    } finally {
+      cleanup?.();
+    }
   };
 
   const handleExportPdfText = async () => {
@@ -262,6 +271,7 @@ export default function AppShell() {
           nodes[index],
           doc.title,
           nodes.length > 1 ? `-p${index + 1}` : "",
+          { watermark: !membership.active },
         );
         await new Promise((resolve) => setTimeout(resolve, 150));
       }
@@ -280,7 +290,7 @@ export default function AppShell() {
         window.alert("原站模板 Word 生成失败，请改用 PDF 或 PNG。");
         return;
       }
-      await exportWord(doc);
+      await exportWord(doc, { watermark: !membership.active });
     } catch (error) {
       window.alert(`导出 Word 失败：${(error as Error).message}`);
     }
@@ -288,7 +298,7 @@ export default function AppShell() {
 
   const handleExportWordText = async () => {
     try {
-      await exportWord(doc);
+      await exportWord(doc, { watermark: !membership.active });
     } catch (error) {
       window.alert(`导出 Word（文字版）失败：${(error as Error).message}`);
     }

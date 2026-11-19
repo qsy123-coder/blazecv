@@ -48,7 +48,7 @@ export async function generateMetadata({
   const { tag, count } = data;
   const meta = tagMeta(tag, count);
   const title = `${tag}简历模板 · ${count} 套免费在线模板`;
-  const description = `${meta.summary} 共 ${count} 套，支持在线编辑、A4 实时预览，免费导出 PDF、PNG、Word。`;
+  const description = `${meta.summary} 共 ${count} 套，支持在线编辑、A4 实时预览；免费版带水印导出，会员无水印导出 PDF、PNG、Word。`;
   const canonical = `${SITE_URL}/templates/tag/${encodeURIComponent(tag)}`;
 
   return {
@@ -123,7 +123,7 @@ export default async function TemplateTagPage({
     },
     {
       q: `这些${tag}简历模板可以免费导出吗？`,
-      a: `可以。本页 ${count} 套模板都支持在线编辑、A4 实时预览，并可免费导出 PDF（图片版/文字版）、PNG 和 Word，无需注册账号。`,
+      a: `可以免登录导出，但免费版文件带水印；开通会员后导出无水印，会员期内不限次数。本页 ${count} 套模板都支持在线编辑、A4 实时预览，并可导出 PDF（图片版/文字版）、PNG 和 Word。`,
     },
     {
       q: `${tag}简历模板会丢失原有排版吗？`,

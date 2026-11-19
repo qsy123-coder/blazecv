@@ -255,7 +255,7 @@ export function GuideArticle({
           <section className="mt-8 rounded-2xl bg-slate-900 p-6 text-white">
             <h2 className="text-[16px] font-semibold">用模板把内容落到 A4 上</h2>
             <p className="mt-1.5 text-[12px] leading-6 text-slate-300">
-              4127 套模板支持在线编辑、A4 实时预览，免费导出 PDF、PNG 和 Word。
+              4127 套模板支持在线编辑、A4 实时预览；免费版带水印导出，会员无水印导出 PDF、PNG 和 Word。
             </p>
             <div className="mt-4 flex flex-wrap gap-3">
               <Link

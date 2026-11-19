@@ -95,3 +95,62 @@ INSERT INTO user_resumes (user_id, id, title, doc, created_at, updated_at)
 SELECT user_id, id, title, doc, created_at, updated_at
 FROM cloud_resumes
 ON CONFLICT DO NOTHING;
+
+-- 支付订单：唯一事实来源。金额单位一律为分。
+CREATE TABLE IF NOT EXISTS payment_orders (
+    id uuid PRIMARY KEY,
+    out_trade_no text UNIQUE NOT NULL,
+    user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    plan text NOT NULL,
+    amount_fen integer NOT NULL CHECK (amount_fen > 0),
+    status text NOT NULL DEFAULT 'created',
+    provider text NOT NULL DEFAULT 'wechat',
+    channel text NOT NULL DEFAULT 'wechat',
+    sub_mchid text,
+    code_url text,
+    provider_trade_no text,
+    attach jsonb NOT NULL DEFAULT '{}'::jsonb,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    updated_at timestamptz NOT NULL DEFAULT now(),
+    expires_at timestamptz NOT NULL,
+    paid_at timestamptz,
+    last_checked_at timestamptz,
+    refunded_at timestamptz
+);
+
+ALTER TABLE payment_orders ADD COLUMN IF NOT EXISTS sub_mchid text;
+ALTER TABLE payment_orders ADD COLUMN IF NOT EXISTS channel text NOT NULL DEFAULT 'wechat';
+
+CREATE INDEX IF NOT EXISTS payment_orders_user_idx
+    ON payment_orders (user_id, created_at DESC);
+
+CREATE UNIQUE INDEX IF NOT EXISTS payment_orders_provider_trade_no_key
+    ON payment_orders (provider_trade_no) WHERE provider_trade_no IS NOT NULL;
+
+-- 会员投影：导出接口只需一次主键查询。
+CREATE TABLE IF NOT EXISTS memberships (
+    user_id uuid PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    plan text NOT NULL,
+    expires_at timestamptz NOT NULL,
+    updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- 发货账本：order_id 主键保证同一订单只加一次时长。
+CREATE TABLE IF NOT EXISTS membership_grants (
+    order_id uuid PRIMARY KEY REFERENCES payment_orders(id) ON DELETE CASCADE,
+    user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    plan text NOT NULL,
+    days integer NOT NULL,
+    created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS payment_events (
+    id text PRIMARY KEY,
+    out_trade_no text NOT NULL,
+    event_type text NOT NULL,
+    payload jsonb NOT NULL,
+    created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS payment_events_order_idx
+    ON payment_events (out_trade_no, created_at DESC);
