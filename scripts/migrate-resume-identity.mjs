@@ -22,6 +22,31 @@ const EMAIL_MAP = MAP.emails;
 const PHONE_MAP = MAP.phones;
 const AVATAR_COUNT = 13;
 
+const AVATAR_GENDER = JSON.parse(readFileSync("src/lib/avatar-gender.json", "utf8"));
+const NAME_POOLS = JSON.parse(readFileSync("src/lib/placeholder-names.json", "utf8"));
+const MALE_NAMES = NAME_POOLS.male;
+const FEMALE_NAMES = NAME_POOLS.female;
+const LEGACY_PLACEHOLDERS = new Set([
+  "王小明", "李思远", "张若曦", "陈嘉宁", "刘子涵", "杨晨曦",
+  "周慕白", "吴清和", "郑亦然", "孙可欣", "徐嘉树", "何书言",
+  "林知远", "黄予安", "赵清欢", "马一诺",
+]);
+const ALL_PLACEHOLDERS = new Set([...MALE_NAMES, ...FEMALE_NAMES, ...LEGACY_PLACEHOLDERS]);
+
+const rawHash = (key) => {
+  let h = 2166136261;
+  for (let i = 0; i < key.length; i += 1) {
+    h ^= key.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return Math.abs(h);
+};
+
+const genderOfAvatar = (path) => {
+  const m = String(path ?? "").match(/avatar-(\d+)\.jpg$/);
+  return m ? AVATAR_GENDER[m[1]] ?? null : null;
+};
+
 const TEXT_RULES = [
   ["超级公司", "示例公司"],
   ["超级简历", "示例"],
@@ -78,6 +103,16 @@ function scrubDoc(input) {
   if (typeof b.jobTitle === "string") setStr(b, "jobTitle", scrubText(b.jobTitle));
   if (typeof b.avatar === "string") setStr(b, "avatar", scrubAvatar(b.avatar, doc.id ?? "resume"));
 
+  // 性别一致性：占位姓名必须与头像性别匹配（用户自定义姓名不动）
+  const nameBeforeAlignment = typeof b.name === "string" ? b.name : null;
+  if (typeof b.name === "string" && ALL_PLACEHOLDERS.has(b.name)) {
+    const gender = genderOfAvatar(b.avatar);
+    if (gender) {
+      const pool = gender === "male" ? MALE_NAMES : FEMALE_NAMES;
+      setStr(b, "name", pool[rawHash(`${doc.id ?? "resume"}#name`) % pool.length]);
+    }
+  }
+
   for (const section of doc.sections ?? []) {
     if (typeof section.title === "string") setStr(section, "title", scrubText(section.title));
     if (typeof section.content === "string") setStr(section, "content", scrubText(section.content));
@@ -97,6 +132,18 @@ function scrubDoc(input) {
         }
       }
     }
+  }
+
+  // 姓名因性别对齐改了，标题同步
+  if (
+    nameBeforeAlignment &&
+    typeof doc.basics.name === "string" &&
+    doc.basics.name !== nameBeforeAlignment &&
+    typeof doc.title === "string" &&
+    doc.title.includes(nameBeforeAlignment)
+  ) {
+    doc.title = doc.title.split(nameBeforeAlignment).join(doc.basics.name);
+    changed = true;
   }
 
   const preset = doc.templatePreset;

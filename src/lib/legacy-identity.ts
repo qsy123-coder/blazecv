@@ -1,5 +1,7 @@
 import type { ResumeDoc } from "./types";
 import map from "./legacy-identity-map.json";
+import avatarGender from "./avatar-gender.json";
+import namePools from "./placeholder-names.json";
 
 /**
  * 已保存简历的旧样例数据清洗。
@@ -26,13 +28,46 @@ const TEXT_RULES: Array<[string, string]> = [
 const AVATAR_COUNT = 13;
 const EXTERNAL_AVATAR_RE = /^https?:\/\//i;
 
-function stableIndex(key: string): number {
+const AVATAR_DIR = "/wondercv-assets/avatars/";
+const AVATAR_GENDER = avatarGender as Record<string, "male" | "female">;
+const MALE_NAMES: string[] = namePools.male;
+const FEMALE_NAMES: string[] = namePools.female;
+
+/** 上一轮使用过的混合池名字，同样视为可安全对齐的占位名。 */
+const LEGACY_PLACEHOLDERS = new Set([
+  "王小明", "李思远", "张若曦", "陈嘉宁", "刘子涵", "杨晨曦",
+  "周慕白", "吴清和", "郑亦然", "孙可欣", "徐嘉树", "何书言",
+  "林知远", "黄予安", "赵清欢", "马一诺",
+]);
+
+const ALL_PLACEHOLDERS = new Set([
+  ...MALE_NAMES,
+  ...FEMALE_NAMES,
+  ...LEGACY_PLACEHOLDERS,
+]);
+
+function genderOfAvatar(path: string): "male" | "female" | null {
+  const match = path.match(/avatar-(\d+)\.jpg$/);
+  if (!match) return null;
+  return AVATAR_GENDER[match[1]] ?? null;
+}
+
+function pickNameFor(seed: string, gender: "male" | "female"): string {
+  const pool = gender === "male" ? MALE_NAMES : FEMALE_NAMES;
+  return pool[rawHash(`${seed}#name`) % pool.length];
+}
+
+function rawHash(key: string): number {
   let hash = 2166136261;
   for (let i = 0; i < key.length; i += 1) {
     hash ^= key.charCodeAt(i);
     hash = Math.imul(hash, 16777619);
   }
-  return Math.abs(hash) % AVATAR_COUNT;
+  return Math.abs(hash);
+}
+
+function stableIndex(key: string): number {
+  return rawHash(key) % AVATAR_COUNT;
 }
 
 function localAvatar(seed: string): string {
@@ -127,6 +162,36 @@ export function scrubLegacyDoc(input: ResumeDoc): ScrubResult {
     }
   }
 
+  // 性别一致性：占位姓名必须与头像性别匹配。
+  // 只在姓名仍是我们生成的占位名时校正——用户自己改过的真实姓名一律不动。
+  const nameBeforeAlignment = typeof basics.name === "string" ? basics.name : null;
+  if (typeof basics.name === "string" && ALL_PLACEHOLDERS.has(basics.name)) {
+    const avatarPath = typeof basics.avatar === "string" ? basics.avatar : "";
+    const gender = genderOfAvatar(avatarPath);
+    if (gender) {
+      const aligned = pickNameFor(doc.id ?? "resume", gender);
+      if (aligned !== basics.name) {
+        basics.name = aligned;
+        changed = true;
+      }
+    } else {
+      // 没有头像，或头像是用户自己的：按姓名性别选一张匹配的占位头像
+      const nameGender = MALE_NAMES.includes(basics.name) ? "male" : "female";
+      const pool = nameGender === "male" ? MALE_NAMES : FEMALE_NAMES;
+      if (pool.includes(basics.name)) {
+        const candidates = Object.keys(AVATAR_GENDER).filter(
+          (idx) => AVATAR_GENDER[idx] === nameGender,
+        );
+        const chosen = candidates[rawHash(`${doc.id ?? "resume"}#avatar`) % candidates.length];
+        const local = `${AVATAR_DIR}avatar-${chosen}.jpg`;
+        if (basics.avatar !== local) {
+          basics.avatar = local;
+          changed = true;
+        }
+      }
+    }
+  }
+
   // 正文：只做公司/品牌/域名替换，不动姓名映射，避免误伤叙述文本
   for (const section of doc.sections ?? []) {
     const raw = section as unknown as Record<string, unknown>;
@@ -167,6 +232,18 @@ export function scrubLegacyDoc(input: ResumeDoc): ScrubResult {
         }
       }
     }
+  }
+
+  // 姓名若因性别对齐而改了，标题里的旧名字同步更新，避免「标题与正文不同名」
+  if (
+    nameBeforeAlignment &&
+    typeof doc.basics.name === "string" &&
+    doc.basics.name !== nameBeforeAlignment &&
+    typeof doc.title === "string" &&
+    doc.title.includes(nameBeforeAlignment)
+  ) {
+    doc.title = doc.title.split(nameBeforeAlignment).join(doc.basics.name);
+    changed = true;
   }
 
   const preset = doc.templatePreset as unknown as Record<string, unknown> | undefined;

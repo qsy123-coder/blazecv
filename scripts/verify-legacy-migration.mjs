@@ -11,9 +11,13 @@
  * 运行：CDP_URL=http://127.0.0.1:9227 node scripts/verify-legacy-migration.mjs
  */
 import puppeteer from "puppeteer-core";
+import { readFileSync } from "node:fs";
 
 const BASE = (process.env.APP_URL ?? "http://127.0.0.1:3000").replace(/\/$/, "");
 const CDP_URL = process.env.CDP_URL ?? "http://127.0.0.1:9227";
+
+const AVATAR_GENDER = JSON.parse(readFileSync("src/lib/avatar-gender.json", "utf8"));
+const NAME_POOLS = JSON.parse(readFileSync("src/lib/placeholder-names.json", "utf8"));
 
 const results = [];
 const check = (name, pass, detail = "") => {
@@ -83,6 +87,7 @@ async function seedLegacyResume(page) {
       });
       // 清掉迁移标记，模拟「首次运行迁移」
       tx.objectStore("settings").delete("legacy-scrub-v1");
+      tx.objectStore("settings").delete("legacy-scrub-v2");
       tx.oncomplete = () => resolve(null);
       tx.onerror = () => reject(tx.error);
     });
@@ -155,6 +160,26 @@ try {
     `title=${stored?.title}`,
   );
   check("编辑器姓名输入框已同步", nameInput !== "陈媛媛Abbey", `input=${nameInput}`);
+
+  // 性别一致性：占位姓名必须与头像性别匹配
+  const avatarIdx = String(stored?.basics?.avatar ?? "").match(/avatar-(\d+)\.jpg$/)?.[1];
+  const avatarGender = avatarIdx ? AVATAR_GENDER[avatarIdx] : null;
+  const nameGender = NAME_POOLS.male.includes(stored?.basics?.name)
+    ? "male"
+    : NAME_POOLS.female.includes(stored?.basics?.name)
+      ? "female"
+      : null;
+  check(
+    "姓名性别与头像一致",
+    Boolean(avatarGender) && avatarGender === nameGender,
+    `avatar=${avatarIdx}(${avatarGender}) name=${stored?.basics?.name}(${nameGender})`,
+  );
+
+  check(
+    "标题与姓名一致",
+    String(stored?.title ?? "").startsWith(String(stored?.basics?.name ?? "\u0000")),
+    `title=${stored?.title} name=${stored?.basics?.name}`,
+  );
 
   const leftover = JSON.stringify(stored ?? {});
   check(
