@@ -13,7 +13,9 @@ import { join, basename } from "node:path";
 
 const ROOTS = ["public/template-content", "public/template-pages"];
 const PLACEHOLDER = "/wondercv-assets/avatar-placeholder.svg";
-const COUNT = 13;
+const COUNT = Object.keys(
+  JSON.parse(readFileSync("src/lib/avatar-gender.json", "utf8")),
+).length;
 
 function stableIndex(key) {
   let hash = 2166136261;

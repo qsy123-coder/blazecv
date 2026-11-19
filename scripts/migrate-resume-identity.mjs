@@ -23,9 +23,21 @@ const PHONE_MAP = MAP.phones;
 const AVATAR_COUNT = 13;
 
 const AVATAR_GENDER = JSON.parse(readFileSync("src/lib/avatar-gender.json", "utf8"));
+const AVATAR_INDEXES = Object.keys(AVATAR_GENDER);
 const NAME_POOLS = JSON.parse(readFileSync("src/lib/placeholder-names.json", "utf8"));
 const MALE_NAMES = NAME_POOLS.male;
 const FEMALE_NAMES = NAME_POOLS.female;
+
+/** 历史 13 张头像的性别 → 收敛到当前两套头像。 */
+const LEGACY_AVATAR_GENDER = {
+  "1": "female", "2": "male", "3": "male", "4": "female", "5": "male", "6": "female",
+  "7": "male", "8": "female", "9": "male", "10": "male", "11": "male", "12": "female",
+  "13": "female",
+};
+const avatarForGender = (g) => {
+  const idx = AVATAR_INDEXES.find((i) => AVATAR_GENDER[i] === g) ?? AVATAR_INDEXES[0];
+  return `/wondercv-assets/avatars/avatar-${idx}.jpg`;
+};
 const LEGACY_PLACEHOLDERS = new Set([
   "王小明", "李思远", "张若曦", "陈嘉宁", "刘子涵", "杨晨曦",
   "周慕白", "吴清和", "郑亦然", "孙可欣", "徐嘉树", "何书言",
@@ -79,10 +91,21 @@ const scrubName = (v) => {
 };
 
 const scrubPhone = (v) => (v.replace(/\D/g, "").length < 7 ? v : PHONE_MAP[v] ?? v);
-const scrubAvatar = (v, seed) =>
-  v && /^https?:\/\//i.test(v) && /avatars?\//i.test(v)
-    ? `/wondercv-assets/avatars/avatar-${stableIndex(seed) + 1}.jpg`
-    : v;
+const stableAvatar = (seed) => {
+  const idx = AVATAR_INDEXES[stableIndex(seed) % AVATAR_INDEXES.length];
+  return `/wondercv-assets/avatars/avatar-${idx}.jpg`;
+};
+
+const scrubAvatar = (v, seed) => {
+  if (!v) return v;
+  const local = String(v).match(/\/wondercv-assets\/avatars\/avatar-(\d+)\.jpg$/);
+  if (local) {
+    if (AVATAR_GENDER[local[1]]) return v;
+    const g = LEGACY_AVATAR_GENDER[local[1]];
+    return g ? avatarForGender(g) : stableAvatar(seed);
+  }
+  return /^https?:\/\//i.test(v) && /avatars?\//i.test(v) ? stableAvatar(seed) : v;
+};
 
 function scrubDoc(input) {
   const doc = JSON.parse(JSON.stringify(input));

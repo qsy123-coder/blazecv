@@ -1,33 +1,25 @@
 # 头像素材来源与授权
 
-本目录下的 13 张头像均来自 **Pexels**，适用 [Pexels License](https://www.pexels.com/license/)：
+本目录只有两张头像，均为 **AI 生成**的东亚面孔，来自 **gimgs.net**，适用
+[CC0 1.0 通用（公共领域贡献）](https://creativecommons.org/publicdomain/zero/1.0/)：
 
-- 可免费用于**商业**与个人项目
-- **无需署名**（本项目仍在此保留来源以便追溯）
-- 可修改、裁剪
-- 限制：不得转售未修改的原图、不得暗示照片中人物为你的产品或服务背书
+- 可免费用于**商业**与个人项目，**无需署名**
+- 放弃全部著作权，可任意修改、裁剪、再分发
+- 非真人照片，不涉及任何人的肖像权
 
 ## 文件对照
 
-| 文件 | Pexels 图片页 |
-|---|---|
-| avatar-1.jpg | https://www.pexels.com/photo/733872/ |
-| avatar-2.jpg | https://www.pexels.com/photo/7625292/ |
-| avatar-3.jpg | https://www.pexels.com/photo/12311528/ |
-| avatar-4.jpg | https://www.pexels.com/photo/774909/ |
-| avatar-5.jpg | https://www.pexels.com/photo/220453/ |
-| avatar-6.jpg | https://www.pexels.com/photo/415829/ |
-| avatar-7.jpg | https://www.pexels.com/photo/91227/ |
-| avatar-8.jpg | https://www.pexels.com/photo/1181686/ |
-| avatar-9.jpg | https://www.pexels.com/photo/2182970/ |
-| avatar-10.jpg | https://www.pexels.com/photo/2379004/ |
-| avatar-11.jpg | https://www.pexels.com/photo/3785079/ |
-| avatar-12.jpg | https://www.pexels.com/photo/3763188/ |
-| avatar-13.jpg | https://www.pexels.com/photo/2381069/ |
+| 文件 | 性别 | 来源页 |
+|---|---|---|
+| avatar-1.jpg | 女 | https://gimgs.net/ai-images/professional-japanese-woman-in-business-attire--ft3sTJUD.html |
+| avatar-2.jpg | 男 | https://gimgs.net/ai-images/portrait-of-a-young-korean-man--TBq5Jt9I.html |
 
 ## 使用说明
 
-- 这些图片仅作为简历模板的**示例头像**使用，不指向任何真实求职者。
-- 模板中头像的分配由 `scripts/distribute-avatars.mjs` 按模板 token 的稳定哈希决定，
+- 仅作为简历模板的**示例头像**，不指向任何真实求职者。
+- 性别与姓名的对应关系写在 `src/lib/avatar-gender.json` 与
+  `src/lib/placeholder-names.json`：女性头像配「张若曦」，男性头像配「王小明」。
+- 模板头像的分配由 `scripts/remap-two-avatars.mjs` 按性别写入，
   同一模板的编辑页与预览页使用同一张头像。
-- 若后续要替换为自有素材，直接覆盖同名文件即可，无需改代码。
+- 替换素材时直接覆盖同名文件即可，无需改代码；若新增头像，需同步更新
+  `src/lib/avatar-gender.json`。

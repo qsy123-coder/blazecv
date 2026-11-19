@@ -25,11 +25,13 @@ const TEXT_RULES: Array<[string, string]> = [
   ["wondercv.com", "example.com"],
 ];
 
-const AVATAR_COUNT = 13;
 const EXTERNAL_AVATAR_RE = /^https?:\/\//i;
 
 const AVATAR_DIR = "/wondercv-assets/avatars/";
 const AVATAR_GENDER = avatarGender as Record<string, "male" | "female">;
+/** 头像编号列表来自 avatar-gender.json，新增/删除头像时无需改代码。 */
+const AVATAR_INDEXES = Object.keys(AVATAR_GENDER);
+const AVATAR_COUNT = AVATAR_INDEXES.length;
 const MALE_NAMES: string[] = namePools.male;
 const FEMALE_NAMES: string[] = namePools.female;
 
@@ -105,9 +107,30 @@ function scrubPhone(value: string): string {
   return PHONE_MAP[value] ?? value;
 }
 
+/** 历史 13 张头像的性别，用于把旧编号映射到当前两套头像。 */
+const LEGACY_AVATAR_GENDER: Record<string, "male" | "female"> = {
+  "1": "female", "2": "male", "3": "male", "4": "female", "5": "male", "6": "female",
+  "7": "male", "8": "female", "9": "male", "10": "male", "11": "male", "12": "female",
+  "13": "female",
+};
+
+function avatarForGender(gender: "male" | "female"): string {
+  const idx = AVATAR_INDEXES.find((i) => AVATAR_GENDER[i] === gender) ?? AVATAR_INDEXES[0];
+  return `${AVATAR_DIR}avatar-${idx}.jpg`;
+}
+
 function scrubAvatar(value: string, seed: string): string {
   if (!value) return value;
-  if (value.startsWith("/wondercv-assets/avatars/")) return value;
+
+  const local = value.match(/\/wondercv-assets\/avatars\/avatar-(\d+)\.jpg$/);
+  if (local) {
+    // 当前编号仍在用就直接保留
+    if (AVATAR_GENDER[local[1]]) return value;
+    // 旧编号（如已删除的 avatar-5）按性别映射到现存头像
+    const legacyGender = LEGACY_AVATAR_GENDER[local[1]];
+    return legacyGender ? avatarForGender(legacyGender) : localAvatar(seed);
+  }
+
   if (EXTERNAL_AVATAR_RE.test(value) && /avatars?\//i.test(value)) {
     return localAvatar(seed);
   }
@@ -179,7 +202,7 @@ export function scrubLegacyDoc(input: ResumeDoc): ScrubResult {
       const nameGender = MALE_NAMES.includes(basics.name) ? "male" : "female";
       const pool = nameGender === "male" ? MALE_NAMES : FEMALE_NAMES;
       if (pool.includes(basics.name)) {
-        const candidates = Object.keys(AVATAR_GENDER).filter(
+        const candidates = AVATAR_INDEXES.filter(
           (idx) => AVATAR_GENDER[idx] === nameGender,
         );
         const chosen = candidates[rawHash(`${doc.id ?? "resume"}#avatar`) % candidates.length];
