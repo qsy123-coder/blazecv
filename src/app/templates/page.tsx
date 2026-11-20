@@ -154,7 +154,14 @@ export default async function TemplatesPage() {
             ))}
           </div>
           <p className="mt-4 text-[11px] text-slate-400">
-            第一次使用？可以查看
+            想一次浏览更多？可以
+            <Link
+              href="/templates/page/1"
+              className="mx-1 text-blue-600 hover:underline"
+            >
+              分页浏览全部 4127 套模板
+            </Link>
+            （每页 96 套）；第一次使用还可以查看
             <Link href="/faq" className="mx-1 text-blue-600 hover:underline">
               简历模板常见问题
             </Link>

@@ -47,6 +47,15 @@ export const metadata: Metadata = {
       ? { "baidu-site-verification": process.env.BAIDU_SITE_VERIFICATION }
       : {}),
   },
+  // Search Console / Bing Webmaster HTML-tag verification. Pages are
+  // prerendered, so the value has to be present in the environment when
+  // `next build` runs, not only at runtime.
+  verification: {
+    google: process.env.GOOGLE_SITE_VERIFICATION || undefined,
+    other: process.env.BING_SITE_VERIFICATION
+      ? { "msvalidate.01": process.env.BING_SITE_VERIFICATION }
+      : {},
+  },
   icons: {
     icon: [
       { url: "/icon.svg", type: "image/svg+xml" },

@@ -168,6 +168,22 @@ check(
     catalogPage.body.includes("/guides/fresh-graduate-no-internship"),
 );
 
+// 8.1 分页列表：为每一套模板提供站内入口（爬虫可达性）
+const firstPage = await get("/templates/page/1");
+const pageLinks = (firstPage.body.match(/href="\/templates\/[^"/]+"/g) ?? []).length;
+check(
+  "分页列表服务端含 ≥90 个模板链接",
+  firstPage.status === 200 && pageLinks >= 90,
+  `links=${pageLinks}`,
+);
+const lastPageNumber = Math.max(1, Math.ceil(templateUrls.length / 96));
+const lastPage = await get(`/templates/page/${lastPageNumber}`);
+check(
+  "分页末页可访问且 noindex/follow",
+  lastPage.status === 200 && lastPage.body.includes("noindex"),
+  `page=${lastPageNumber}`,
+);
+
 // 9. IndexNow 密钥 -----------------------------------------------------------
 const keyFile = await get(`/${INDEXNOW_KEY}.txt`, { accept: "text/plain" });
 check(
