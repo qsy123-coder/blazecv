@@ -39,9 +39,17 @@ const avatarForGender = (g) => {
   return `/wondercv-assets/avatars/avatar-${idx}.jpg`;
 };
 const LEGACY_PLACEHOLDERS = new Set([
+  // 最早的混合池
   "王小明", "李思远", "张若曦", "陈嘉宁", "刘子涵", "杨晨曦",
   "周慕白", "吴清和", "郑亦然", "孙可欣", "徐嘉树", "何书言",
   "林知远", "黄予安", "赵清欢", "马一诺",
+  // 性别池（男）
+  "张皓宇", "陈子昂", "刘博文", "杨志强", "周天成", "吴俊杰",
+  "郑凯文", "孙浩然", "徐明轩", "何子豪", "高远航", "林建国",
+  "罗子轩", "马天佑",
+  // 性别池（女）
+  "杨雪晴", "林思彤", "周语桐", "吴静怡", "郑雅婷", "徐婉清",
+  "何书瑶", "刘雨桐", "马晓萱", "高静雯", "罗佳怡",
 ]);
 const ALL_PLACEHOLDERS = new Set([...MALE_NAMES, ...FEMALE_NAMES, ...LEGACY_PLACEHOLDERS]);
 

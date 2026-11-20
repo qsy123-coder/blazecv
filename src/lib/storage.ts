@@ -47,7 +47,7 @@ interface BlazeDB {
 }
 
 const ACTIVE_KEY = "active-resume";
-const LEGACY_SCRUB_KEY = "legacy-scrub-v3";
+const LEGACY_SCRUB_KEY = "legacy-scrub-v4";
 const VERSION_INTERVAL_MS = 10 * 60 * 1000;
 const VERSION_LIMIT = 20;
 
