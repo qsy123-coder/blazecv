@@ -8,6 +8,8 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "verify": "node scripts/verify.mjs",
+    "verify:seo": "node scripts/verify-seo.mjs",
+    "seo:submit": "node scripts/seo-submit.mjs",
     "verify:pay": "node scripts/verify-pay.mjs",
     "verify:pay:ui": "node scripts/verify-pay-ui.mjs",
     "verify:pay:partner": "node scripts/verify-wechat-partner.mjs",
