@@ -34,9 +34,11 @@ const LEGACY_AVATAR_GENDER = {
   "7": "male", "8": "female", "9": "male", "10": "male", "11": "male", "12": "female",
   "13": "female",
 };
+/** 头像文件曾同名覆盖，线上是 immutable 一年缓存，URL 必须带版本号。 */
+const AVATAR_VERSION = "?v=2";
 const avatarForGender = (g) => {
   const idx = AVATAR_INDEXES.find((i) => AVATAR_GENDER[i] === g) ?? AVATAR_INDEXES[0];
-  return `/wondercv-assets/avatars/avatar-${idx}.jpg`;
+  return `/wondercv-assets/avatars/avatar-${idx}.jpg${AVATAR_VERSION}`;
 };
 const LEGACY_PLACEHOLDERS = new Set([
   // 最早的混合池
@@ -101,14 +103,15 @@ const scrubName = (v) => {
 const scrubPhone = (v) => (v.replace(/\D/g, "").length < 7 ? v : PHONE_MAP[v] ?? v);
 const stableAvatar = (seed) => {
   const idx = AVATAR_INDEXES[stableIndex(seed) % AVATAR_INDEXES.length];
-  return `/wondercv-assets/avatars/avatar-${idx}.jpg`;
+  return `/wondercv-assets/avatars/avatar-${idx}.jpg${AVATAR_VERSION}`;
 };
 
 const scrubAvatar = (v, seed) => {
   if (!v) return v;
-  const local = String(v).match(/\/wondercv-assets\/avatars\/avatar-(\d+)\.jpg$/);
+  const bare = String(v).replace(/\?.*$/, "");
+  const local = bare.match(/\/wondercv-assets\/avatars\/avatar-(\d+)\.jpg$/);
   if (local) {
-    if (AVATAR_GENDER[local[1]]) return v;
+    if (AVATAR_GENDER[local[1]]) return `${bare}${AVATAR_VERSION}`;
     const g = LEGACY_AVATAR_GENDER[local[1]];
     return g ? avatarForGender(g) : stableAvatar(seed);
   }

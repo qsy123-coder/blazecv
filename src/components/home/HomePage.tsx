@@ -58,7 +58,7 @@ function HeroTemplateThumb({
     <div className="overflow-hidden rounded" style={{ width, height }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={`/template-thumbs/${token}.webp`}
+        src={`/template-thumbs/${token}.webp?v=2`}
         alt={alt}
         className="h-full w-full object-cover"
       />

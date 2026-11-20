@@ -28,6 +28,12 @@ const TEXT_RULES: Array<[string, string]> = [
 const EXTERNAL_AVATAR_RE = /^https?:\/\//i;
 
 const AVATAR_DIR = "/wondercv-assets/avatars/";
+/**
+ * 头像按同名文件替换过（13 张 → 2 张），而线上给 `/wondercv-assets/*` 发的是
+ * `immutable` 一年缓存，浏览器会一直显示旧图。资源 URL 带版本号强制换缓存键。
+ * 换头像文件时把这个值 +1。
+ */
+const AVATAR_VERSION = "?v=2";
 const AVATAR_GENDER = avatarGender as Record<string, "male" | "female">;
 /** 头像编号列表来自 avatar-gender.json，新增/删除头像时无需改代码。 */
 const AVATAR_INDEXES = Object.keys(AVATAR_GENDER);
@@ -60,7 +66,7 @@ const ALL_PLACEHOLDERS = new Set([
 ]);
 
 function genderOfAvatar(path: string): "male" | "female" | null {
-  const match = path.match(/avatar-(\d+)\.jpg$/);
+  const match = path.replace(/\?.*$/, "").match(/avatar-(\d+)\.jpg$/);
   if (!match) return null;
   return AVATAR_GENDER[match[1]] ?? null;
 }
@@ -84,7 +90,7 @@ function stableIndex(key: string): number {
 }
 
 function localAvatar(seed: string): string {
-  return `/wondercv-assets/avatars/avatar-${stableIndex(seed) + 1}.jpg`;
+  return `/wondercv-assets/avatars/avatar-${stableIndex(seed) + 1}.jpg${AVATAR_VERSION}`;
 }
 
 /** 只在明确是身份字段时才做姓名映射。 */
@@ -127,16 +133,17 @@ const LEGACY_AVATAR_GENDER: Record<string, "male" | "female"> = {
 
 function avatarForGender(gender: "male" | "female"): string {
   const idx = AVATAR_INDEXES.find((i) => AVATAR_GENDER[i] === gender) ?? AVATAR_INDEXES[0];
-  return `${AVATAR_DIR}avatar-${idx}.jpg`;
+  return `${AVATAR_DIR}avatar-${idx}.jpg${AVATAR_VERSION}`;
 }
 
 function scrubAvatar(value: string, seed: string): string {
   if (!value) return value;
 
-  const local = value.match(/\/wondercv-assets\/avatars\/avatar-(\d+)\.jpg$/);
+  const bare = value.replace(/\?.*$/, "");
+  const local = bare.match(/\/wondercv-assets\/avatars\/avatar-(\d+)\.jpg$/);
   if (local) {
-    // 当前编号仍在用就直接保留
-    if (AVATAR_GENDER[local[1]]) return value;
+    // 当前编号仍在用就直接保留，并补上缓存版本号
+    if (AVATAR_GENDER[local[1]]) return `${bare}${AVATAR_VERSION}`;
     // 旧编号（如已删除的 avatar-5）按性别映射到现存头像
     const legacyGender = LEGACY_AVATAR_GENDER[local[1]];
     return legacyGender ? avatarForGender(legacyGender) : localAvatar(seed);

@@ -70,7 +70,7 @@ export function LazyTemplateThumb({
   // Official template preview image: instant, same aspect, same design. It is
   // replaced by the exact render as soon as the card approaches the viewport.
   const previewSrc = exactToken
-    ? `/template-thumbs/${encodeURIComponent(exactToken)}.webp`
+    ? `/template-thumbs/${encodeURIComponent(exactToken)}.webp?v=2`
     : null;
   const showPreview = Boolean(previewSrc && !previewBroken);
 

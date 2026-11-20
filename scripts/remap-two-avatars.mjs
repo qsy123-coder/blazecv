@@ -23,7 +23,8 @@ const LEGACY_GENDER = {
 };
 
 const NAMES = JSON.parse(readFileSync("src/lib/placeholder-names.json", "utf8"));
-const NEW_AVATAR = { female: "avatar-1.jpg", male: "avatar-2.jpg" };
+const AVATAR_VERSION = "?v=2";
+const NEW_AVATAR = { female: `avatar-1.jpg${AVATAR_VERSION}`, male: `avatar-2.jpg${AVATAR_VERSION}` };
 const NEW_NAME = { female: NAMES.female[0], male: NAMES.male[0] };
 
 /** 历史上出现过的占位名（含已被替换掉的旧池）。 */

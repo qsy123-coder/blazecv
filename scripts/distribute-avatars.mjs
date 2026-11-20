@@ -36,7 +36,7 @@ for (const dir of ROOTS) {
     const before = readFileSync(path, "utf8");
     if (!before.includes(PLACEHOLDER)) continue;
     const token = basename(file).replace(/\.(json|html)$/, "");
-    const avatar = `/wondercv-assets/avatars/avatar-${stableIndex(token) + 1}.jpg`;
+    const avatar = `/wondercv-assets/avatars/avatar-${stableIndex(token) + 1}.jpg?v=2`;
     const hits = before.split(PLACEHOLDER).length - 1;
     const after = before.split(PLACEHOLDER).join(avatar);
     writeFileSync(path, after, "utf8");
