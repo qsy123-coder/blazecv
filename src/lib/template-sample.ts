@@ -1,10 +1,11 @@
-import type {
+﻿import type {
   Basics,
   ResumeDoc,
   Section,
   TemplatePreset,
 } from "./types";
 import { createSampleResume } from "./sample";
+import { TEMPLATE_ASSET_VERSION } from "./template-version";
 
 export interface TemplateContent {
   title?: string;
@@ -17,7 +18,7 @@ export async function loadTemplateContent(
 ): Promise<TemplateContent | null> {
   try {
     const response = await fetch(
-      `/template-content/${encodeURIComponent(token)}.json`,
+      `/template-content/${encodeURIComponent(token)}.json${TEMPLATE_ASSET_VERSION}`,
     );
     if (!response.ok) return null;
     return (await response.json()) as TemplateContent;

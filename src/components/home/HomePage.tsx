@@ -1,4 +1,6 @@
-"use client";
+﻿"use client";
+
+import { TEMPLATE_ASSET_VERSION } from "@/lib/template-version";
 
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -58,7 +60,7 @@ function HeroTemplateThumb({
     <div className="overflow-hidden rounded" style={{ width, height }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={`/template-thumbs/${token}.webp?v=2`}
+        src={`/template-thumbs/${token}.webp${TEMPLATE_ASSET_VERSION}`}
         alt={alt}
         className="h-full w-full object-cover"
       />

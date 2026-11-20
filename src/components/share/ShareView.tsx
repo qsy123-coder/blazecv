@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -6,6 +6,7 @@ import type { ResumeDoc, TemplateTokens } from "@/lib/types";
 import { ResumePaper } from "@/components/preview/ResumePaper";
 import { ExactTemplatePreview } from "@/components/preview/ExactTemplatePreview";
 import { usePagination } from "@/components/preview/usePagination";
+import { TEMPLATE_ASSET_VERSION } from "@/lib/template-version";
 import {
   EXACT_HEIGHT_PX,
   EXACT_WIDTH_PX,
@@ -55,7 +56,7 @@ export function ShareView({
     }
     let cancelled = false;
     setExactReady(false);
-    void fetch(`/template-pages/${encodeURIComponent(exactToken)}.html`, {
+    void fetch(`/template-pages/${encodeURIComponent(exactToken)}.html${TEMPLATE_ASSET_VERSION}`, {
       method: "HEAD",
     })
       .then((response) => {

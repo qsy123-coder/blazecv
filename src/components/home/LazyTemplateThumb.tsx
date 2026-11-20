@@ -1,4 +1,6 @@
-"use client";
+﻿"use client";
+
+import { TEMPLATE_ASSET_VERSION } from "@/lib/template-version";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ResumeDoc, TemplateId } from "@/lib/types";
@@ -70,7 +72,7 @@ export function LazyTemplateThumb({
   // Official template preview image: instant, same aspect, same design. It is
   // replaced by the exact render as soon as the card approaches the viewport.
   const previewSrc = exactToken
-    ? `/template-thumbs/${encodeURIComponent(exactToken)}.webp?v=2`
+    ? `/template-thumbs/${encodeURIComponent(exactToken)}.webp${TEMPLATE_ASSET_VERSION}`
     : null;
   const showPreview = Boolean(previewSrc && !previewBroken);
 

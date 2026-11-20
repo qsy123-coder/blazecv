@@ -1,7 +1,8 @@
-"use client";
+﻿"use client";
 
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { TEMPLATE_ASSET_VERSION } from "@/lib/template-version";
 import type { ResumeDoc, Section } from "@/lib/types";
 import { createBlankResume } from "@/lib/sample";
 import {
@@ -64,7 +65,7 @@ function AuditView() {
     setLoaded(false);
     setReady(false);
     setHeight(EXACT_HEIGHT_PX);
-    void fetch(`/template-content/${encodeURIComponent(token)}.json`)
+    void fetch(`/template-content/${encodeURIComponent(token)}.json${TEMPLATE_ASSET_VERSION}`)
       .then(async (response) => {
         const content = response.ok
           ? ((await response.json()) as {
@@ -206,7 +207,7 @@ function AuditView() {
         <iframe
           ref={frameRef}
           title="原站模板 1:1 预览"
-          src={`/template-pages/${encodeURIComponent(frameToken)}.html`}
+          src={`/template-pages/${encodeURIComponent(frameToken)}.html${TEMPLATE_ASSET_VERSION}`}
           width={EXACT_WIDTH_PX}
           height={height}
           scrolling="no"

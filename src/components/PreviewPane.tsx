@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ResumeDoc, TemplateTokens } from "@/lib/types";
@@ -10,6 +10,7 @@ import {
   getExactTemplateToken,
 } from "@/lib/exact-template";
 import { useResumeStore } from "@/store/useResumeStore";
+import { TEMPLATE_ASSET_VERSION } from "@/lib/template-version";
 import { A4_HEIGHT_PX, A4_WIDTH_PX } from "@/lib/paper";
 import { useMembership } from "@/lib/use-membership";
 import { WatermarkOverlay } from "@/components/preview/WatermarkOverlay";
@@ -51,7 +52,7 @@ export function PreviewPane({
     }
     let cancelled = false;
     setExactReady(false);
-    void fetch(`/template-pages/${encodeURIComponent(exactToken)}.html`, {
+    void fetch(`/template-pages/${encodeURIComponent(exactToken)}.html${TEMPLATE_ASSET_VERSION}`, {
       method: "HEAD",
     })
       .then((response) => {

@@ -1,4 +1,4 @@
-import type { ResumeDoc } from "./types";
+﻿import type { ResumeDoc } from "./types";
 import {
   applyExactTemplate,
   EXACT_HEIGHT_PX,
@@ -6,6 +6,7 @@ import {
   getExactTemplateToken,
 } from "./exact-template";
 import { downloadBlob, safeFileName, todayStamp } from "./utils";
+import { TEMPLATE_ASSET_VERSION } from "./template-version";
 
 /** Optional UI callback so long exports can show a progress message. */
 export type ExportProgress = (detail: string) => void;
@@ -219,7 +220,7 @@ async function renderExactPng(
   }
 
   onProgress?.("服务端渲染不可用，正在本地渲染…");
-  const response = await fetch(`/template-pages/${encodeURIComponent(token)}.html`);
+  const response = await fetch(`/template-pages/${encodeURIComponent(token)}.html${TEMPLATE_ASSET_VERSION}`);
   if (!response.ok) return null;
   const source = await response.text();
   const parsed = new DOMParser().parseFromString(source, "text/html");

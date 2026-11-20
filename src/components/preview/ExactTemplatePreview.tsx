@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ResumeDoc, Theme } from "@/lib/types";
@@ -9,6 +9,7 @@ import {
   EXACT_WIDTH_PX,
 } from "@/lib/exact-template";
 import { WatermarkOverlay } from "./WatermarkOverlay";
+import { TEMPLATE_ASSET_VERSION } from "@/lib/template-version";
 
 export const EXACT_PREVIEW_CSS = `
 @font-face {
@@ -157,7 +158,7 @@ export function ExactTemplatePreview({
       <iframe
         ref={ref}
         title="原站模板 1:1 预览"
-        src={`/template-pages/${encodeURIComponent(token)}.html`}
+        src={`/template-pages/${encodeURIComponent(token)}.html${TEMPLATE_ASSET_VERSION}`}
         width={width}
         height={pageHeight}
         scrolling="no"

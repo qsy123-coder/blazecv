@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ResumeDoc } from "@/lib/types";
@@ -9,6 +9,7 @@ import {
 } from "@/lib/exact-template";
 import { EXACT_PREVIEW_CSS } from "@/components/preview/ExactTemplatePreview";
 import { getCachedThumb, putCachedThumb } from "@/lib/storage";
+import { TEMPLATE_ASSET_VERSION } from "@/lib/template-version";
 
 // Binding a full template is heavy; the library can mount dozens of cards at
 // once. Keep a small shared queue so opening the page does not lock the main
@@ -183,7 +184,7 @@ export function ExactTemplateThumb({
 
   const srcProps = cachedHtml
     ? ({ srcDoc: cachedHtml } as const)
-    : ({ src: `/template-pages/${encodeURIComponent(token)}.html` } as const);
+    : ({ src: `/template-pages/${encodeURIComponent(token)}.html${TEMPLATE_ASSET_VERSION}` } as const);
 
   return (
     <div
