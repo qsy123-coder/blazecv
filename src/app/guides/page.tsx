@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteHeader } from "@/components/SiteHeader";
+import { SiteFooter } from "@/components/SiteFooter";
 import { GUIDES, guideHref, readingMinutes } from "@/lib/guides";
-import { OG_IMAGE, SITE_NAME, SITE_URL } from "@/lib/seo";
+import { OG_IMAGE, SITE_NAME, SITE_URL, pageAlternates } from "@/lib/seo";
 
 const TITLE = "写简历指南 · 应届生、校招与社招简历写法";
 const DESC =
@@ -11,7 +12,7 @@ const DESC =
 export const metadata: Metadata = {
   title: TITLE,
   description: DESC,
-  alternates: { canonical: "/guides" },
+  alternates: pageAlternates("/guides"),
   keywords: [
     "写简历指南",
     "应届生简历怎么写",
@@ -147,6 +148,8 @@ export default function GuidesPage() {
           </p>
         </section>
       </main>
+
+      <SiteFooter />
 
       <script
         type="application/ld+json"

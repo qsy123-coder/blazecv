@@ -15,6 +15,7 @@ import { saveResume } from "@/lib/storage";
 import { fitThemeToOnePage } from "@/lib/fit";
 import { TEMPLATE_GROUPS } from "@/lib/gallery";
 import { SiteHeader } from "@/components/SiteHeader";
+import { SiteFooter } from "@/components/SiteFooter";
 import { Icon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 
@@ -46,7 +47,10 @@ export function TemplateCatalog({ seoLinks }: { seoLinks?: ReactNode }) {
     const params = new URLSearchParams(window.location.search);
     const urlTag = params.get("tag");
     const urlLayout = params.get("layout");
+    // `?q=` backs the WebSite SearchAction target in the root JSON-LD.
+    const urlQuery = params.get("q");
     if (urlTag) setTag(urlTag);
+    if (urlQuery) setQuery(urlQuery);
     if (urlLayout && TEMPLATE_GROUPS.some((group) => group.layout === urlLayout)) {
       setLayout(urlLayout as LayoutKind);
     }
@@ -466,12 +470,7 @@ export function TemplateCatalog({ seoLinks }: { seoLinks?: ReactNode }) {
         </div>
       ) : null}
 
-      <footer className="border-t border-slate-200 bg-white px-6 py-5">
-        <div className="mx-auto flex max-w-[1600px] flex-col items-center justify-between gap-2 text-[10px] text-slate-400 sm:flex-row">
-          <span>BlazeCV · 模板库</span>
-          <span>原预览图 + format_info 映射 · 可编辑版式为近似复刻</span>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

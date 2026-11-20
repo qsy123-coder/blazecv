@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteHeader } from "@/components/SiteHeader";
-import { OG_IMAGE, SITE_NAME } from "@/lib/seo";
+import { SiteFooter } from "@/components/SiteFooter";
+import { OG_IMAGE, SITE_NAME, pageAlternates } from "@/lib/seo";
 
 const TITLE = "简历模板常见问题 FAQ";
 const DESC =
@@ -10,7 +11,7 @@ const DESC =
 export const metadata: Metadata = {
   title: TITLE,
   description: DESC,
-  alternates: { canonical: "/faq" },
+  alternates: pageAlternates("/faq"),
   keywords: ["简历模板常见问题", "简历模板免费吗", "简历导出PDF", "简历A4分页", "在线简历工具"],
   openGraph: {
     type: "website",
@@ -136,6 +137,8 @@ export default function FaqPage() {
           </Link>
         </div>
       </main>
+
+      <SiteFooter />
 
       <script
         type="application/ld+json"

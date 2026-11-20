@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
+import { SiteFooter } from "@/components/SiteFooter";
 import type { CatalogFile } from "@/lib/catalog";
 import { LAYOUT_LABELS } from "@/lib/seo-collections";
 import { SITE_NAME, SITE_URL } from "@/lib/seo";
@@ -296,6 +297,8 @@ export function GuideArticle({
           </section>
         ) : null}
       </main>
+
+      <SiteFooter />
 
       <script
         type="application/ld+json"

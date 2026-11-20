@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SiteHeader } from "@/components/SiteHeader";
+import { SiteFooter } from "@/components/SiteFooter";
 import type { CatalogTemplate } from "@/lib/catalog";
 import { LAYOUT_LABELS } from "@/lib/seo-collections";
 import { SITE_NAME, SITE_URL } from "@/lib/seo";
@@ -228,6 +229,8 @@ export function TemplateCollectionPage({
           </section>
         ) : null}
       </main>
+
+      <SiteFooter />
 
       <script
         type="application/ld+json"

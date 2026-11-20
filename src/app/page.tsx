@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { HomePage } from "@/components/home/HomePage";
-import { OG_IMAGE, SITE_NAME, SITE_URL } from "@/lib/seo";
+import { HomeSeoContent } from "@/components/seo/HomeSeoContent";
+import { HOME_FAQ } from "@/lib/home-faq";
+import { OG_IMAGE, SITE_NAME, SITE_URL, pageAlternates } from "@/lib/seo";
 
 const TITLE = "BlazeCV 简历模板库 · 4127 套在线简历模板与简历制作";
 const DESC =
@@ -9,7 +11,7 @@ const DESC =
 export const metadata: Metadata = {
   title: { absolute: TITLE },
   description: DESC,
-  alternates: { canonical: `${SITE_URL}/` },
+  alternates: pageAlternates(`${SITE_URL}/`),
   keywords: [
     "简历模板",
     "个人简历模板",
@@ -39,6 +41,25 @@ export const metadata: Metadata = {
   },
 };
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "@id": `${SITE_URL}/#home-faq`,
+  mainEntity: HOME_FAQ.map((item) => ({
+    "@type": "Question",
+    name: item.q,
+    acceptedAnswer: { "@type": "Answer", text: item.a },
+  })),
+};
+
 export default function Home() {
-  return <HomePage />;
+  return (
+    <>
+      <HomePage seoContent={<HomeSeoContent />} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+    </>
+  );
 }

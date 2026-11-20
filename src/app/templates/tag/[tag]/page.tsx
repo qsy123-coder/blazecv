@@ -14,7 +14,7 @@ import {
   tagHref,
   tagMeta,
 } from "@/lib/seo-collections";
-import { OG_IMAGE, SITE_NAME, SITE_URL } from "@/lib/seo";
+import { OG_IMAGE, SITE_NAME, SITE_URL, pageAlternates } from "@/lib/seo";
 
 export const revalidate = 86400;
 export const dynamicParams = true;
@@ -62,7 +62,7 @@ export async function generateMetadata({
       "简历模板",
       "在线简历",
     ],
-    alternates: { canonical },
+    alternates: pageAlternates(canonical),
     robots:
       count >= MIN_TAG_COUNT
         ? { index: true, follow: true }

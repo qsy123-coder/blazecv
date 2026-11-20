@@ -11,7 +11,7 @@ import {
   tagHref,
   tagStats,
 } from "@/lib/seo-collections";
-import { OG_IMAGE, SITE_NAME } from "@/lib/seo";
+import { OG_IMAGE, SITE_NAME, SITE_URL, pageAlternates } from "@/lib/seo";
 
 const TITLE = "个人简历模板 · 4127 套免费在线简历模板";
 const DESC =
@@ -20,7 +20,7 @@ const DESC =
 export const metadata: Metadata = {
   title: TITLE,
   description: DESC,
-  alternates: { canonical: "/templates" },
+  alternates: pageAlternates("/templates"),
   keywords: [
     "个人简历模板",
     "全部简历模板",
@@ -165,5 +165,46 @@ export default async function TemplatesPage() {
     </>
   );
 
-  return <TemplateCatalog seoLinks={seoLinks} />;
+  const canonical = `${SITE_URL}/templates`;
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "CollectionPage",
+        "@id": `${canonical}#collection`,
+        name: TITLE,
+        description: DESC,
+        url: canonical,
+        inLanguage: "zh-CN",
+        isPartOf: { "@type": "WebSite", name: SITE_NAME, url: SITE_URL },
+        mainEntity: {
+          "@type": "ItemList",
+          numberOfItems: catalog?.count ?? popular.length,
+          itemListElement: popular.slice(0, 24).map((entry, index) => ({
+            "@type": "ListItem",
+            position: index + 1,
+            name: entry.sourceName || entry.name,
+            url: `${SITE_URL}/templates/${entry.token}`,
+          })),
+        },
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "首页", item: `${SITE_URL}/` },
+          { "@type": "ListItem", position: 2, name: "全部模板库", item: canonical },
+        ],
+      },
+    ],
+  };
+
+  return (
+    <>
+      <TemplateCatalog seoLinks={seoLinks} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+    </>
+  );
 }

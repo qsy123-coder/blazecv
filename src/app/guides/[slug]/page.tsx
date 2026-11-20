@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { GuideArticle } from "@/components/guides/GuideArticle";
 import { getCatalog } from "@/lib/catalog-server";
 import { GUIDES, getGuide, guideHref } from "@/lib/guides";
-import { OG_IMAGE, SITE_NAME, SITE_URL } from "@/lib/seo";
+import { OG_IMAGE, SITE_NAME, SITE_URL, pageAlternates } from "@/lib/seo";
 
 export const revalidate = 86400;
 export const dynamicParams = false;
@@ -27,7 +27,7 @@ export async function generateMetadata({
     title: guide.title,
     description: guide.description,
     keywords: [guide.keyword, "简历模板", "简历怎么写", "应届生简历", "校招简历"],
-    alternates: { canonical },
+    alternates: pageAlternates(canonical),
     openGraph: {
       type: "article",
       locale: "zh_CN",

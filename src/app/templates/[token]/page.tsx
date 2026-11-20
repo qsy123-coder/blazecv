@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/SiteHeader";
+import { SiteFooter } from "@/components/SiteFooter";
 import { UseCatalogTemplate } from "@/components/templates/UseCatalogTemplate";
 import { getCatalog, getCatalogTemplate } from "@/lib/catalog-server";
 import type { CatalogTemplate } from "@/lib/catalog";
 import { isLinkableTag, tagHref } from "@/lib/seo-collections";
-import { OG_IMAGE, SITE_NAME, SITE_URL } from "@/lib/seo";
+import { OG_IMAGE, SITE_NAME, SITE_URL, pageAlternates } from "@/lib/seo";
 
 const LAYOUT_LABEL: Record<string, string> = {
   single: "单栏",
@@ -87,7 +88,7 @@ export async function generateMetadata({
       "在线简历",
       "免费简历模板",
     ],
-    alternates: { canonical: `/templates/${entry.token}` },
+    alternates: pageAlternates(`/templates/${entry.token}`),
     openGraph: {
       type: "website",
       locale: "zh_CN",
@@ -322,6 +323,8 @@ export default async function TemplateDetailPage({
           </div>
         </section>
       </main>
+
+      <SiteFooter />
 
       <script
         type="application/ld+json"

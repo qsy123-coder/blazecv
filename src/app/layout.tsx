@@ -35,6 +35,18 @@ export const metadata: Metadata = {
   ],
   referrer: "origin-when-cross-origin",
   formatDetection: { email: false, address: false, telephone: false },
+  alternates: {
+    types: {
+      "application/rss+xml": `${SITE_URL}/feed.xml`,
+    },
+  },
+  other: {
+    // Baidu / Chinese mobile browsers: one responsive URL serves both devices.
+    "applicable-device": "pc,mobile",
+    ...(process.env.BAIDU_SITE_VERIFICATION
+      ? { "baidu-site-verification": process.env.BAIDU_SITE_VERIFICATION }
+      : {}),
+  },
   icons: {
     icon: [
       { url: "/icon.svg", type: "image/svg+xml" },
@@ -92,12 +104,33 @@ const jsonLd = {
   "@context": "https://schema.org",
   "@graph": [
     {
+      "@type": "Organization",
+      "@id": `${SITE_URL}/#organization`,
+      name: SITE_NAME,
+      url: SITE_URL,
+      logo: {
+        "@type": "ImageObject",
+        url: `${SITE_URL}/icon-192.png`,
+        width: 192,
+        height: 192,
+      },
+    },
+    {
       "@type": "WebSite",
       "@id": `${SITE_URL}/#website`,
       url: SITE_URL,
       name: SITE_NAME,
       description: SITE_DESC,
       inLanguage: "zh-CN",
+      publisher: { "@id": `${SITE_URL}/#organization` },
+      potentialAction: {
+        "@type": "SearchAction",
+        target: {
+          "@type": "EntryPoint",
+          urlTemplate: `${SITE_URL}/templates?q={search_term_string}`,
+        },
+        "query-input": "required name=search_term_string",
+      },
     },
     {
       "@type": "WebApplication",

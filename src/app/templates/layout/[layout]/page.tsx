@@ -14,7 +14,7 @@ import {
   tagHref,
   tagStats,
 } from "@/lib/seo-collections";
-import { OG_IMAGE, SITE_NAME, SITE_URL } from "@/lib/seo";
+import { OG_IMAGE, SITE_NAME, SITE_URL, pageAlternates } from "@/lib/seo";
 
 export const revalidate = 86400;
 export const dynamicParams = false;
@@ -63,7 +63,7 @@ export async function generateMetadata({
       "简历模板",
       "在线简历",
     ],
-    alternates: { canonical },
+    alternates: pageAlternates(canonical),
     openGraph: {
       type: "website",
       locale: "zh_CN",

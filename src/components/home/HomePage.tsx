@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { CatalogFile, CatalogTemplate } from "@/lib/catalog";
@@ -19,6 +20,7 @@ import {
 } from "@/lib/storage";
 import { Icon } from "@/components/icons";
 import { SiteHeader } from "@/components/SiteHeader";
+import { SiteFooter } from "@/components/SiteFooter";
 import { cn, uid } from "@/lib/utils";
 
 const LIBRARY_COUNT = 4127;
@@ -114,7 +116,7 @@ function CatalogTemplateCard({
 }
 
 
-export function HomePage() {
+export function HomePage({ seoContent }: { seoContent?: ReactNode }) {
   const [resumes, setResumes] = useState<ResumeSummary[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [creating, setCreating] = useState<string | null>(null);
@@ -411,6 +413,9 @@ export function HomePage() {
               {libraryCount} 套模板 · {TEMPLATE_GROUPS.length} 种版式 · 本地存储
             </span>
             <h1 className="mt-5 text-[42px] font-bold leading-[1.12] tracking-tight text-slate-900 sm:text-[54px]">
+              <span className="mb-2 block text-[13px] font-semibold tracking-[0.18em] text-blue-600 sm:text-[14px]">
+                在线简历制作 · 4127 套简历模板
+              </span>
               一页写清
               <br className="hidden sm:block" />
               你的价值
@@ -687,20 +692,9 @@ export function HomePage() {
         </div>
       </section>
 
-      <footer className="border-t border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-[1600px] flex-col items-center justify-between gap-3 px-6 py-8 text-[11px] text-slate-400 sm:flex-row">
-          <div className="flex items-center gap-2">
-            <div className="flex h-5 w-5 items-center justify-center rounded bg-slate-900 text-[9px] font-bold text-white">
-              B
-            </div>
-            BlazeCV · 本地优先的简历工具
-          </div>
-          <div className="flex items-center gap-4">
-            <span>PDF · PNG · Word</span>
-            <span>数据仅保存在本机</span>
-          </div>
-        </div>
-      </footer>
+      {seoContent}
+
+      <SiteFooter />
     </div>
   );
 }
