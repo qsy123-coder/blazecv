@@ -711,6 +711,14 @@ for (const file of files) {
     } catch {
       hasImage = false;
     }
+    // 缩略图也可能来自 regen-template-thumbs.mjs（MISSING=1），
+    // 没有 crawler 原图时保留已经生成好的本地缩略图。
+    let hasThumb = false;
+    try {
+      hasThumb = (await stat(path.join(thumbDir, `${detailToken}.webp`))).isFile();
+    } catch {
+      hasThumb = false;
+    }
     const placeholder = buildPlaceholder(record.data?.cv_data ?? {}, sc);
     let content = null;
     if (placeholder) {
@@ -731,7 +739,8 @@ for (const file of files) {
       layout,
       font,
       tokens,
-      preview: hasImage ? `/template-thumbs/${detailToken}.webp` : null,
+      preview:
+        hasImage || hasThumb ? `/template-thumbs/${detailToken}.webp` : null,
       content,
       people: Number(sc.people_count) || 0,
       sourceName: String(sc.name).trim(),
@@ -771,7 +780,12 @@ async function worker() {
         .webp({ quality: 84 })
         .toFile(output);
     } catch {
-      entry.preview = null;
+      // 没有 crawler 原图时不要清掉本地已生成的缩略图。
+      try {
+        if (!(await stat(output)).isFile()) entry.preview = null;
+      } catch {
+        entry.preview = null;
+      }
     }
     done += 1;
     if (done % 200 === 0) {

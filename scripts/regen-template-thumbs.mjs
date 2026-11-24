@@ -26,17 +26,25 @@ const LIMIT = process.env.LIMIT ? Number(process.env.LIMIT) : Infinity;
 
 const WIDTH = 720;
 
-// 需要生成缩略图的 token：已存在 webp 且存在对应模板页。
-const tokens = readdirSync(THUMB_DIR)
-  .filter((f) => f.endsWith(".webp"))
-  .map((f) => f.replace(/\.webp$/, ""))
+// 需要生成缩略图的 token：存在对应模板页。
+// 默认覆盖已有缩略图；MISSING=1 时只处理还没有缩略图的模板页（补齐 1005 套）。
+const pageTokens = readdirSync(PAGE_DIR)
+  .filter((f) => f.endsWith(".html"))
+  .map((f) => f.replace(/\.html$/, ""))
   .filter((token) => {
     try {
       return statSync(join(PAGE_DIR, `${token}.html`)).isFile();
     } catch {
       return false;
     }
-  })
+  });
+const haveThumb = new Set(
+  readdirSync(THUMB_DIR)
+    .filter((f) => f.endsWith(".webp"))
+    .map((f) => f.replace(/\.webp$/, "")),
+);
+const tokens = pageTokens
+  .filter((token) => (process.env.MISSING ? !haveThumb.has(token) : true))
   .sort()
   .filter((token) => !process.env.TOKENS || process.env.TOKENS.split(",").includes(token))
   .slice(0, LIMIT);
