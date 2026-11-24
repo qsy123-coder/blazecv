@@ -139,6 +139,12 @@ check(
     detail.body.includes(`/templates/${token}`),
 );
 check("模板详情页含全站页脚内链", detail.body.includes("热门简历模板分类"));
+check(
+  "模板详情页含唯一的结构与参数",
+  detail.body.includes("这套模板的结构与参数") &&
+    detail.body.includes("内容模块") &&
+    detail.body.includes("示例规模"),
+);
 
 // 7. 分类 / 版式落地页 --------------------------------------------------------
 const tag = await get(`/templates/tag/${encodeURIComponent("应届生")}`);

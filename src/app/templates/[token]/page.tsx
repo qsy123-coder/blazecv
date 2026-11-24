@@ -6,7 +6,8 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { UseCatalogTemplate } from "@/components/templates/UseCatalogTemplate";
 import { getCatalog, getCatalogTemplate } from "@/lib/catalog-server";
 import type { CatalogTemplate } from "@/lib/catalog";
-import { isLinkableTag, tagHref } from "@/lib/seo-collections";
+import { isLinkableTag, layoutHref, tagHref } from "@/lib/seo-collections";
+import { getTemplateInsight } from "@/lib/template-insights";
 import { OG_IMAGE, SITE_NAME, SITE_URL, pageAlternates } from "@/lib/seo";
 
 const LAYOUT_LABEL: Record<string, string> = {
@@ -118,6 +119,11 @@ export default async function TemplateDetailPage({
 
   const catalog = await getCatalog().catch(() => null);
   const related = relatedTemplates(catalog, entry);
+  const insight = await getTemplateInsight(entry);
+  const layoutLabel = LAYOUT_LABEL[entry.layout] ?? entry.layout;
+  const sameLayoutCount = catalog
+    ? catalog.templates.filter((item) => item.layout === entry.layout).length
+    : 0;
   const canonical = `${SITE_URL}/templates/${entry.token}`;
   const jsonLd = {
     "@context": "https://schema.org",
@@ -128,6 +134,7 @@ export default async function TemplateDetailPage({
         name: entry.sourceName,
         alternateName: entry.name,
         description: entry.desc,
+        keywords: entry.tags.join(", "),
         image: absolute(entry.preview),
         url: canonical,
         inLanguage: "zh-CN",
@@ -250,6 +257,88 @@ export default async function TemplateDetailPage({
             ) : null}
           </aside>
         </div>
+
+        <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6">
+          <h2 className="text-[18px] font-semibold tracking-tight text-slate-900">
+            这套模板的结构与参数
+          </h2>
+          <p className="mt-3 max-w-4xl text-[12px] leading-6 text-slate-500">
+            「{entry.sourceName}」采用{layoutLabel}版式，主色为
+            {entry.tokens.primary ?? "跟随模板"}，共
+            {insight ? `${insight.modules.length} 个内容模块` : "多个内容模块"}
+            {insight && insight.modules.length > 0
+              ? `（${insight.modules.slice(0, 8).join("、")}）`
+              : ""}
+            。示例内容包含 {insight?.items ?? 0} 段经历、
+            {insight?.bullets ?? 0} 条要点，约 {insight?.words ?? 0} 字，
+            {insight?.hasPhoto ? "带照片位" : "不带照片位"}。适合
+            {entry.tags.slice(0, 4).join("、") || "各类求职场景"}
+            ，替换成自己的内容后即可直接投递；也可以在编辑器的「排版与主题」里调整字号、
+            行距、页边距与主色。
+          </p>
+
+          <dl className="mt-5 grid gap-4 border-t border-slate-100 pt-4 text-[12px] sm:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <dt className="text-slate-400">版式</dt>
+              <dd className="mt-1 font-medium text-slate-700">
+                {layoutLabel}
+                {sameLayoutCount > 0 ? ` · 同版式 ${sameLayoutCount} 套` : ""}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-slate-400">主色</dt>
+              <dd className="mt-1 flex items-center gap-1.5 font-medium text-slate-700">
+                {entry.tokens.primary ? (
+                  <>
+                    <span
+                      className="h-3 w-3 rounded-sm border border-slate-200"
+                      style={{ backgroundColor: entry.tokens.primary }}
+                    />
+                    {entry.tokens.primary}
+                  </>
+                ) : (
+                  "跟随模板"
+                )}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-slate-400">字号</dt>
+              <dd className="mt-1 font-medium text-slate-700">
+                姓名 {entry.tokens.nameSize ?? "—"}px · 正文{" "}
+                {entry.tokens.baseSize ?? "—"}px
+              </dd>
+            </div>
+            <div>
+              <dt className="text-slate-400">示例规模</dt>
+              <dd className="mt-1 font-medium text-slate-700">
+                {insight
+                  ? `${insight.items} 段 · ${insight.bullets} 条 · 约 ${insight.words} 字`
+                  : "—"}
+              </dd>
+            </div>
+          </dl>
+
+          <p className="mt-4 text-[11px] text-slate-400">
+            同类版式：
+            <Link
+              href={layoutHref(entry.layout)}
+              className="mx-1 text-blue-600 hover:underline"
+            >
+              {layoutLabel}简历模板
+            </Link>
+            {entry.tags[0] && isLinkableTag(entry.tags[0]) ? (
+              <>
+                ；按用途：
+                <Link
+                  href={tagHref(entry.tags[0])}
+                  className="mx-1 text-blue-600 hover:underline"
+                >
+                  {entry.tags[0]}简历模板
+                </Link>
+              </>
+            ) : null}
+          </p>
+        </section>
 
         {related.length > 0 ? (
           <section className="mt-12">
