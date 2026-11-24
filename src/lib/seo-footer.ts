@@ -48,6 +48,9 @@ export const FOOTER_GUIDES: Array<{ slug: string; title: string }> = [
   { slug: "resume-skills-section", title: "简历技能栏怎么写" },
   { slug: "resume-photo-or-not", title: "简历要不要放照片" },
   { slug: "resume-file-naming-and-delivery", title: "简历命名与投递" },
+  { slug: "resume-layout-and-typography", title: "简历排版技巧" },
+  { slug: "resume-keywords-and-ats", title: "简历关键词怎么写" },
+  { slug: "career-change-resume", title: "转行简历怎么写" },
 ];
 
 export function footerTagHref(tag: string): string {
