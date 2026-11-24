@@ -51,6 +51,9 @@ export const FOOTER_GUIDES: Array<{ slug: string; title: string }> = [
   { slug: "resume-layout-and-typography", title: "简历排版技巧" },
   { slug: "resume-keywords-and-ats", title: "简历关键词怎么写" },
   { slug: "career-change-resume", title: "转行简历怎么写" },
+  { slug: "job-change-resume", title: "跳槽简历怎么写" },
+  { slug: "resume-employment-gap", title: "简历空窗期怎么写" },
+  { slug: "resume-expected-salary", title: "简历要不要写期望薪资" },
 ];
 
 export function footerTagHref(tag: string): string {
