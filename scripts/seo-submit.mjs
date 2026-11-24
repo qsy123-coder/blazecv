@@ -14,7 +14,7 @@
  *
  * 环境变量：
  *   SITE_URL          默认 https://aetouban.cn
- *   INDEXNOW_KEY      默认 public/b7e4c2f19a3d5e806f41c9b2d7a83e50.txt 的内容
+ *   INDEXNOW_KEY      默认 public/8bc4656d6324475ea403918ea14e0f91.txt 的内容
  *   INDEXNOW_ENDPOINT 默认 https://api.indexnow.org/indexnow
  *   BAIDU_TOKEN       百度搜索资源平台的准入密钥（必填才会推送百度）
  *   BAIDU_SITE        默认取 SITE_URL 的 host
@@ -28,7 +28,7 @@ import { dirname } from "node:path";
 const SITE_URL = (process.env.SITE_URL ?? "https://aetouban.cn").replace(/\/$/, "");
 const SITE_HOST = new URL(SITE_URL).host;
 const INDEXNOW_KEY =
-  process.env.INDEXNOW_KEY ?? "b7e4c2f19a3d5e806f41c9b2d7a83e50";
+  process.env.INDEXNOW_KEY ?? "8bc4656d6324475ea403918ea14e0f91";
 const INDEXNOW_ENDPOINT =
   process.env.INDEXNOW_ENDPOINT ?? "https://api.indexnow.org/indexnow";
 const BAIDU_TOKEN = process.env.BAIDU_TOKEN ?? "";
